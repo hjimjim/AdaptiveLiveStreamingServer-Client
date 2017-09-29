@@ -1,4 +1,4 @@
-PORT=1051
+PORT=1052
 HOST=localhost
 FILE=video.Mjpeg
 

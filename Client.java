@@ -35,6 +35,7 @@ public class Client {
     DatagramSocket RTPsocket;        //socket to be used to send and receive UDP packets
     static int RTP_RCV_PORT = 25000; //port where the client will receive the RTP packets
     
+    File outputFile = new File("sample.h264");
     FileOutputStream fos;
     Timer timer; //timer used to receive data from the UDP socket
     byte[] buf;  //buffer used to store data received from the server 
@@ -259,7 +260,7 @@ public class Client {
                     System.out.println("New RTSP state: PLAYING");
 		    
 		    try {
-		    	fos = new FileOutputStream("sample.mjpeg", true);
+		    	fos = new FileOutputStream(outputFile, true);
                     } catch(Exception fosE) {
 			fosE.printStackTrace();
 		    }
@@ -302,6 +303,11 @@ public class Client {
                     timer.stop();
                     rtcpSender.stopSend();
                 }
+		try {
+	 	    fos.close();
+		} catch (Exception e1) {
+		    System.out.println(e1.toString());
+		}
             }
             //else if state != PLAYING then do nothing
         }
@@ -403,7 +409,7 @@ public class Client {
 
 
 
-//		fos.write(payload);
+		fos.write(payload,0,payload_length);
 //		for(int i = 0; i < payload_length; i++) {
 //			System.out.print(payload[i]);
 //		}
