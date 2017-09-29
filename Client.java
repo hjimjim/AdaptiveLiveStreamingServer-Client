@@ -259,7 +259,7 @@ public class Client {
                     System.out.println("New RTSP state: PLAYING");
 		    
 		    try {
-		    	fos = new FileOutputStream("sample.h264", true);
+		    	fos = new FileOutputStream("sample.mjpeg", true);
                     } catch(Exception fosE) {
 			fosE.printStackTrace();
 		    }
@@ -407,7 +407,7 @@ public class Client {
 //		for(int i = 0; i < payload_length; i++) {
 //			System.out.print(payload[i]);
 //		}
-		System.out.println("!!!!!!!!!!!!!!!!!");
+//		System.out.println("!!!!!!!!!!!!!!!!!");
 
 
                 //compute stats and update the label in GUI

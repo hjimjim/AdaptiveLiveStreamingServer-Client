@@ -79,6 +79,9 @@ public class Server extends JFrame implements ActionListener {
     //Performance optimization and Congestion control
     ImageTranslator imgTranslator;
     CongestionController cc;
+	
+    File outputFile = new File("4444.h264");
+    FileOutputStream fos1 = null;
     
     final static String CRLF = "\r\n";
 
@@ -121,6 +124,12 @@ public class Server extends JFrame implements ActionListener {
 
         //Video encoding and quality
         imgTranslator = new ImageTranslator(0.8f);
+	
+	try{	
+		fos1 = new FileOutputStream(outputFile,true);
+	} catch(Exception e) {
+		System.out.println("e");
+	}
     }
           
     //------------------------------------
@@ -224,7 +233,8 @@ public class Server extends JFrame implements ActionListener {
                 //close sockets
                 server.RTSPsocket.close();
                 server.RTPsocket.close();
-
+		server.fos1.close();
+		System.out.println("endendendendendendendendend");
                 System.exit(0);
             }
             else if (request_type == DESCRIBE) {
@@ -239,7 +249,7 @@ public class Server extends JFrame implements ActionListener {
     }
 
     public void save_video() {
-	System.out.println("save_video");
+	//System.out.println("save_video");
 	FileOutputStream fos;
         Date today = new Date();
 	String file_name = "hahah"+ ".h264";
@@ -259,7 +269,7 @@ public class Server extends JFrame implements ActionListener {
 		int n = input.read(bytes, 0, 35);
 		String str = new String(bytes);
 		wifi_name = str.substring(29,35);		
-		System.out.println("wifi_name: "+wifi_name);
+		//System.out.println("wifi_name: "+wifi_name);
 	} catch(IOException e4) {
 		System.out.println("Exception Processor Builder: "+e4);			
 	}
@@ -278,9 +288,9 @@ public class Server extends JFrame implements ActionListener {
     public void actionPerformed(ActionEvent e) {
         byte[] frame;
        
-	System.out.println("44444");
+	//System.out.println("44444");
         if(check_wifi().equals("off/an")) {
-		System.out.println("111");
+		//System.out.println("111");
 		timer.stop();
 		rtcpReceiver.stopRcv();
 		return;
@@ -295,10 +305,15 @@ public class Server extends JFrame implements ActionListener {
             try {
                 //get next frame to send from the video, as well as its size
                 image_length = video.getnextframe(buf);
-		for(int i=0; i<8; i++) {
-			System.out.print(buf[i]);
-		}
-		System.out.println("");
+	    } catch (Exception e3) {
+		System.out.println("new11" + e3.toString());
+	    }
+            try{
+		System.out.println("^^^^^^^^^"+image_length);
+		fos1.write(buf,0,image_length);
+		//for(int i=0; i<8; i++) {
+			//System.out.print("!!!!!"+buf[i]);
+		//}
 	    } catch(Exception e2) {
 		System.out.println("11" + e2.toString());
 	    }
@@ -309,6 +324,7 @@ public class Server extends JFrame implements ActionListener {
                 if (congestionLevel > 0) {
                     imgTranslator.setCompressionQuality(1.0f - congestionLevel * 0.2f);
                     frame = imgTranslator.compress(Arrays.copyOfRange(buf, 0, image_length));
+		    //System.out.println("congestion level changed!!!!!!!!!!!!!!!!!");
                     image_length = frame.length;
                     System.arraycopy(frame, 0, buf, 0, image_length);
                 }
