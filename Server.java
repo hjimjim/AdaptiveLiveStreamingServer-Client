@@ -1,8 +1,7 @@
 /* ------------------
    Server
    usage: java Server [RTSP listening port]
-   ---------------------- */
-
+---------------------- */
 
 import java.io.*;
 import java.net.*;
@@ -17,7 +16,8 @@ import javax.imageio.stream.ImageOutputStream;
 
 public class Server extends JFrame implements ActionListener {
 
-    static String inetaddr="";
+    boolean check = false;
+
     //RTP variables:
     //----------------
     DatagramSocket RTPsocket; //socket to be used to send and receive UDP packets
@@ -41,6 +41,8 @@ public class Server extends JFrame implements ActionListener {
 
     Timer timer;    //timer used to send the images at the video frame rate
     byte[] buf;     //buffer used to store the images to send to the client 
+    byte[] buff; 
+
     int sendDelay;  //the delay to send images over the wire. Ideally should be
                     //equal to the frame rate of the video file, but may be 
                     //adjusted when congestion is detected.
@@ -77,12 +79,13 @@ public class Server extends JFrame implements ActionListener {
     int congestionLevel;
 
     //Performance optimization and Congestion control
-    ImageTranslator imgTranslator;
     CongestionController cc;
 	
-    File outputFile = new File("4444.h264");
+    File outputFile = new File("video.h264");
     FileOutputStream fos1 = null;
     
+    File saveFile = new File("hahaha.h264");
+    FileOutputStream fos2 = null;
     final static String CRLF = "\r\n";
 
     //--------------------------------
@@ -104,6 +107,7 @@ public class Server extends JFrame implements ActionListener {
 
         //allocate memory for the sending buffer
         buf = new byte[20000]; 
+        buff = new byte[20000]; 
 
         //Handler to close the main window
         addWindowListener(new WindowAdapter() {
@@ -123,13 +127,13 @@ public class Server extends JFrame implements ActionListener {
         getContentPane().add(label, BorderLayout.CENTER);
 
         //Video encoding and quality
-        imgTranslator = new ImageTranslator(0.8f);
 	
-	try{	
-		fos1 = new FileOutputStream(outputFile,true);
-	} catch(Exception e) {
-		System.out.println("e");
-	}
+        try {	
+            fos1 = new FileOutputStream(outputFile,true);
+            fos2 = new FileOutputStream(saveFile,true);
+        } catch(Exception e) {
+            System.out.println("e");
+        }
     }
           
     //------------------------------------
@@ -156,7 +160,6 @@ public class Server extends JFrame implements ActionListener {
 
         //Get Client IP address
         server.ClientIPAddr = server.RTSPsocket.getInetAddress();
-	inetaddr = listenSocket.getInetAddress().toString();
 
         //Initiate RTSPstate
         state = INIT;
@@ -182,7 +185,7 @@ public class Server extends JFrame implements ActionListener {
                 server.sendResponse();
              
                 //init the VideoStream object:
-                server.video = new VideoStream(VideoFileName);
+                server.video = new VideoStream();
 
                 //init RTP and RTCP sockets
                 server.RTPsocket = new DatagramSocket();
@@ -216,9 +219,10 @@ public class Server extends JFrame implements ActionListener {
                 server.sendResponse();
                 //stop timer
 
-               System.out.println("222");
+                System.out.println("222");
                 server.timer.stop();
                 server.rtcpReceiver.stopRcv();
+                
                 //update state
                 state = READY;
                 System.out.println("New RTSP state: READY");
@@ -233,8 +237,11 @@ public class Server extends JFrame implements ActionListener {
                 //close sockets
                 server.RTSPsocket.close();
                 server.RTPsocket.close();
-		server.fos1.close();
-		System.out.println("endendendendendendendendend");
+
+                server.fos1.close();
+                server.fos2.close();
+                System.out.println("endendendendendendendendend");
+
                 System.exit(0);
             }
             else if (request_type == DESCRIBE) {
@@ -244,42 +251,38 @@ public class Server extends JFrame implements ActionListener {
         }
     }
 
-    public void change_status() {
-
-    }
-
-    public void save_video() {
-	//System.out.println("save_video");
-	FileOutputStream fos;
-        Date today = new Date();
-	String file_name = "hahah"+ ".h264";
-	    try {
-		fos = new FileOutputStream(file_name, true);
-	    } catch(Exception fosE) {
-		fosE.printStackTrace();
-	    }
-    }
-
+//    public void save_video() {
+//	    System.out.println("save_video");
+//        int image_length = 0;
+//        try {
+//            video.getStarted();
+//            image_length = video.getnextframe(buff);
+//            fos2.write(buff,0,image_length);
+//        } catch(Exception fosE) {
+//            fosE.printStackTrace();
+//        }
+//    }
+//
     public String check_wifi() {
-	byte[] bytes = new byte[1024];
-	String wifi_name = "";
-	try{	
-		Process process = new ProcessBuilder("iwconfig", "wlan0").start();
-		InputStream input = process.getInputStream();
-		int n = input.read(bytes, 0, 35);
-		String str = new String(bytes);
-		wifi_name = str.substring(29,35);		
-		//System.out.println("wifi_name: "+wifi_name);
-	} catch(IOException e4) {
-		System.out.println("Exception Processor Builder: "+e4);			
-	}
+	    byte[] bytes = new byte[1024];
+        String wifi_name = "";
+        try{	
+            Process process = new ProcessBuilder("iwconfig", "wlan0").start();
+            InputStream input = process.getInputStream();
+            int n = input.read(bytes, 0, 35);
+            String str = new String(bytes);
+            wifi_name = str.substring(29,35);		
+            //System.out.println("wifi_name: "+wifi_name);
+        } catch(IOException e4) {
+            System.out.println("Exception Processor Builder: "+e4);			
+        }
 
-//	if(wifi_name.equals("off/an")) {
-//		//stop everything
-//		System.out.println("jiminjiminjiminimin");
-//		save_video();
-//	}
-	return wifi_name;
+        //	if(wifi_name.equals("off/an")) {
+        //		//stop everything
+        //		System.out.println("jiminjiminjiminimin");
+        //		save_video();
+        //	}
+	    return wifi_name;
     }
 
     //------------------------
@@ -287,47 +290,45 @@ public class Server extends JFrame implements ActionListener {
     //------------------------
     public void actionPerformed(ActionEvent e) {
         byte[] frame;
-       
-	//System.out.println("44444");
+        int image_length = 0 ;
         if(check_wifi().equals("off/an")) {
-		//System.out.println("111");
-		timer.stop();
-		rtcpReceiver.stopRcv();
-		return;
-	}
-
+           // timer.stop();
+            System.out.println("hahahahahaahahahahahahahahhahahahahh");
+            if(!check) {
+                try{
+                    System.out.println("nononoo");
+                    video.stopVideo();
+                    video.getStarted();
+                } catch (Exception e10) {
+                
+                }
+            }
+            check = true;
+            try{
+                image_length = video.getnextframe(buf);
+                fos2.write(buf,0,image_length);
+            } catch (Exception e4) {
+                System.out.println("eee");
+            }
+            //save_video();
+            //return;
+        } else {
         //if the current image nb is less than the length of the video
         if (imagenb < VIDEO_LENGTH) {
             //update current imagenb
             imagenb++;
 	 
-	    int image_length = 0 ;
             try {
                 //get next frame to send from the video, as well as its size
                 image_length = video.getnextframe(buf);
-	    } catch (Exception e3) {
-		System.out.println("new11" + e3.toString());
-	    }
-            try{
-		System.out.println("^^^^^^^^^"+image_length);
-		fos1.write(buf,0,image_length);
-		//for(int i=0; i<8; i++) {
-			//System.out.print("!!!!!"+buf[i]);
-		//}
-	    } catch(Exception e2) {
-		System.out.println("11" + e2.toString());
-	    }
-
-	    try {
-
+                fos1.write(buf,0,image_length);
                 //adjust quality of the image if there is congestion detected
                 if (congestionLevel > 0) {
-                    imgTranslator.setCompressionQuality(1.0f - congestionLevel * 0.2f);
-                    frame = imgTranslator.compress(Arrays.copyOfRange(buf, 0, image_length));
-		    //System.out.println("congestion level changed!!!!!!!!!!!!!!!!!");
-                    image_length = frame.length;
-                    System.arraycopy(frame, 0, buf, 0, image_length);
+                    //Fixme : Jimin
+                    //image_length = frame.length;
+                    //System.arraycopy(frame, 0, buf, 0, image_length);
                 }
+
                 //Builds an RTPpacket object containing the frame
                 RTPpacket rtp_packet = new RTPpacket(MJPEG_TYPE, imagenb, imagenb*FRAME_PERIOD, buf, image_length);
                 
@@ -350,8 +351,7 @@ public class Server extends JFrame implements ActionListener {
 
                 //update GUI
                 label.setText("Send frame #" + imagenb);
-            }
-            catch(Exception ex) {
+            } catch(Exception ex) {
                 System.out.println("Exception caught5: "+ex);
                 //System.exit(0);
             }
@@ -361,6 +361,7 @@ public class Server extends JFrame implements ActionListener {
             timer.stop();
             rtcpReceiver.stopRcv();
         }
+      }
     }
 
     //------------------------
@@ -413,10 +414,11 @@ public class Server extends JFrame implements ActionListener {
             float fractionLost;
 
             try {
-		RTCPsocket.setSoTimeout(3000);
+                //Jimin
+                //RTCPsocket.setSoTimeout(3000);
                 RTCPsocket.receive(dp);   // Blocking
                 RTCPpacket rtcpPkt = new RTCPpacket(dp.getData(), dp.getLength());
-                System.out.println("[RTCP] " + rtcpPkt);
+                System.out.println("Jimin Jimin [RTCP] " + rtcpPkt);
 
                 //set congestion level between 0 to 4
                 fractionLost = rtcpPkt.fractionLost;
@@ -449,68 +451,12 @@ public class Server extends JFrame implements ActionListener {
         }
 
         public void stopRcv() {
-	System.out.println("5555");
-	if(check_wifi().equals("off/an")) {
-		System.out.println("!!!!!!!");
-		save_video();
-	}
+            System.out.println("5555");
             rtcpTimer.stop();
         }
     }
 
-    //------------------------------------
-    //Translate an image to different encoding or quality
-    //------------------------------------
-    class ImageTranslator {
-
-        private float compressionQuality;
-        private ByteArrayOutputStream baos;
-        private BufferedImage image;
-        private Iterator<ImageWriter>writers;
-        private ImageWriter writer;
-        private ImageWriteParam param;
-        private ImageOutputStream ios;
-
-        public ImageTranslator(float cq) {
-            compressionQuality = cq;
-
-            try {
-                baos =  new ByteArrayOutputStream();
-                ios = ImageIO.createImageOutputStream(baos);
-
-                writers = ImageIO.getImageWritersByFormatName("jpeg");
-
-                writer = (ImageWriter)writers.next();
-                writer.setOutput(ios);
-
-                param = writer.getDefaultWriteParam();
-                param.setCompressionMode(ImageWriteParam.MODE_EXPLICIT);
-                param.setCompressionQuality(compressionQuality);
-
-            } catch (Exception ex) {
-                System.out.println("Exception caught7: "+ex);
-                System.exit(0);
-            }
-        }
-
-        public byte[] compress(byte[] imageBytes) {
-            try {
-                baos.reset();
-                image = ImageIO.read(new ByteArrayInputStream(imageBytes));
-                writer.write(null, new IIOImage(image, null, null), param);
-            } catch (Exception ex) {
-                System.out.println("Exception caught1: "+ex);
-                System.exit(0);
-            }
-            return baos.toByteArray();
-        }
-
-        public void setCompressionQuality(float cq) {
-            compressionQuality = cq;
-            param.setCompressionQuality(compressionQuality);
-        }
-    }
-
+    
     //------------------------------------
     //Parse RTSP Request
     //------------------------------------
