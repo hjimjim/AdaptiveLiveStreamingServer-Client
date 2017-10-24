@@ -2,9 +2,13 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import javax.swing.Timer;
 import java.io.*;
+import java.net.*;
+import java.util.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
-public class UDPServer {
-    VideoStream video;
+public class UDPServer implements ActionListener {
+    /*VideoStream video;
     Timer timer;
     FileOutputStream fos1 = null;
     DatagramSocket dsoc;
@@ -26,7 +30,6 @@ public class UDPServer {
 
         UDPServer server = new UDPServer();
         server.ClientIPAddr = server.dsoc.getInetAddress();
-        server.destPort =
 
         try{
             timer.start();
@@ -61,6 +64,71 @@ public class UDPServer {
         } catch (Exception ex) {
             System.out.println("Exception caught5: " + ex);
             //System.exit(0);
+        }
+    }*/
+    DataInputStream dis = null;
+    FileInputStream fis = null;
+    static Timer timer;
+    DatagramSocket socket;
+    DatagramPacket dp;
+    byte[] by = new byte[20000];
+    static boolean end = true;
+    InetAddress ia;
+    String filename = "sample.h264";
+
+    public UDPServer() {
+        System.out.println(this);
+        timer = new Timer(100, this);
+        File file = new File(filename);
+
+        if(file.exists() == false) {
+            System.out.println("File does not exist");
+            System.exit(0);
+        }
+
+        try {
+            System.out.println("1");
+            fis = new FileInputStream("sample.h264");
+            dis = new DataInputStream(fis);
+        } catch(Exception e) {
+            System.out.println("!!!!!!");
+            e.printStackTrace();
+        }
+
+        String ip = "127.0.0.1";
+        try {
+            System.out.println("2");
+            socket = new DatagramSocket();
+            ia = InetAddress.getByName(ip);
+        } catch(Exception e) {
+            System.out.println("!!!!!");
+            System.out.println(e.getMessage());
+        }
+    }
+
+    public static void main(String[] args) {
+        UDPServer server = new UDPServer();
+
+        System.out.println("3");
+        timer.start();
+
+        System.out.println("File ended");
+    }
+
+    @Override
+    public void actionPerformed(ActionEvent e) {
+        try {
+            System.out.println("tic");
+            int xx = dis.read(by, 0, by.length);
+            if (xx == -1) {
+                timer.stop();
+                end = false;
+            }
+
+            dp = new DatagramPacket(by, xx, ia, 9875);
+            socket.send(dp);
+        } catch(Exception e1) {
+            System.out.println(e1.getMessage());
         }
     }
 }
