@@ -172,7 +172,7 @@ public class Server extends JFrame implements ActionListener {
         int request_type;
         boolean done = false;
         while(!done) {
-            request_type = server.parseRequest(); //blocking
+            request_type=server.parseRequest(); //blocking
     
             if (request_type == SETUP) {
                 done = true;
@@ -190,6 +190,7 @@ public class Server extends JFrame implements ActionListener {
                 //init RTP and RTCP sockets
                 server.RTPsocket = new DatagramSocket();
                 server.RTCPsocket = new DatagramSocket(RTCP_RCV_PORT);
+                request_type = PLAY;
             }
         }
 
@@ -276,13 +277,7 @@ public class Server extends JFrame implements ActionListener {
         } catch(IOException e4) {
             System.out.println("Exception Processor Builder: "+e4);			
         }
-
-        //	if(wifi_name.equals("off/an")) {
-        //		//stop everything
-        //		System.out.println("jiminjiminjiminimin");
-        //		save_video();
-        //	}
-	    return wifi_name;
+        return wifi_name;
     }
 
     //------------------------
@@ -311,8 +306,8 @@ public class Server extends JFrame implements ActionListener {
                 System.out.println("eee");
             }
             //save_video();
-            //return;
-        } else {
+            return;
+        } 
         //if the current image nb is less than the length of the video
         if (imagenb < VIDEO_LENGTH) {
             //update current imagenb
@@ -361,7 +356,6 @@ public class Server extends JFrame implements ActionListener {
             timer.stop();
             rtcpReceiver.stopRcv();
         }
-      }
     }
 
     //------------------------
