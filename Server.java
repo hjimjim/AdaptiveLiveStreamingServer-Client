@@ -10,13 +10,26 @@ import java.util.*;
 import java.awt.event.*;
 import javax.swing.*;
 import javax.swing.Timer;
-import java.awt.image.*;
-import javax.imageio.*;
-import javax.imageio.stream.ImageOutputStream;
 
 public class Server extends JFrame implements ActionListener {
 
     boolean check = false;
+
+
+    final int HIGH = 1;
+    final int MID = 2;
+    final int LOW = 3;
+    final int DISCON = 0;
+    int signalcnt = 0;
+    int prevSignalL = -1;
+    int checkResult =0;
+    boolean isRecon = false;
+
+    final static int FILELIST = 8;
+    final static int DOWNLOAD = 9;
+    int fileLength = 0;
+    int fileIndex = 1;
+
 
     //RTP variables:
     //----------------
@@ -36,7 +49,7 @@ public class Server extends JFrame implements ActionListener {
     int imagenb = 0; //image nb of the image currently transmitted
     VideoStream video; //VideoStream object used to access video frames
     static int MJPEG_TYPE = 96; //RTP payload type for MJPEG video
-    static int FRAME_PERIOD = 100; //Frame period of the video to stream, in ms
+    static int FRAME_PERIOD = 50; //Frame period of the video to stream, in ms
     static int VIDEO_LENGTH = 5000; //length of the video in frames
 
     Timer timer;    //timer used to send the images at the video frame rate
@@ -159,8 +172,9 @@ public class Server extends JFrame implements ActionListener {
         listenSocket.close();
 
         //Get Client IP address
-        server.ClientIPAddr = server.RTSPsocket.getInetAddress();
+        //server.ClientIPAddr = server.RTSPsocket.getInetAddress();
 
+         server.ClientIPAddr = InetAddress.getByName("172.16.19.142");
         //Initiate RTSPstate
         state = INIT;
 
@@ -172,7 +186,7 @@ public class Server extends JFrame implements ActionListener {
         int request_type;
         boolean done = false;
         while(!done) {
-            request_type=server.parseRequest(); //blocking
+            request_type = server.parseRequest(); //blocking
     
             if (request_type == SETUP) {
                 done = true;
@@ -190,7 +204,6 @@ public class Server extends JFrame implements ActionListener {
                 //init RTP and RTCP sockets
                 server.RTPsocket = new DatagramSocket();
                 server.RTCPsocket = new DatagramSocket(RTCP_RCV_PORT);
-                request_type = PLAY;
             }
         }
 
@@ -204,7 +217,7 @@ public class Server extends JFrame implements ActionListener {
                 server.sendResponse();
                 //start timer
 		try {
-			server.video.getStarted();
+			server.video.getStarted("360", "240");
 		}catch(Exception e) {
 			System.out.println("error from getStarted()");
 		}
@@ -241,7 +254,6 @@ public class Server extends JFrame implements ActionListener {
 
                 server.fos1.close();
                 server.fos2.close();
-                System.out.println("endendendendendendendendend");
 
                 System.exit(0);
             }
@@ -252,62 +264,146 @@ public class Server extends JFrame implements ActionListener {
         }
     }
 
-//    public void save_video() {
-//	    System.out.println("save_video");
-//        int image_length = 0;
-//        try {
-//            video.getStarted();
-//            image_length = video.getnextframe(buff);
-//            fos2.write(buff,0,image_length);
-//        } catch(Exception fosE) {
-//            fosE.printStackTrace();
-//        }
-//    }
-//
-    public String check_wifi() {
+    public int check_wifi() {
 	    byte[] bytes = new byte[1024];
-        String wifi_name = "";
-        try{	
+        String wifi_name;
+        int signalLevel;
+        try {
             Process process = new ProcessBuilder("iwconfig", "wlan0").start();
             InputStream input = process.getInputStream();
-            int n = input.read(bytes, 0, 35);
+            input.read(bytes, 0, 312); // check iwconfig
             String str = new String(bytes);
-            wifi_name = str.substring(29,35);		
-            //System.out.println("wifi_name: "+wifi_name);
-        } catch(IOException e4) {
-            System.out.println("Exception Processor Builder: "+e4);			
-        }
-        return wifi_name;
-    }
+            wifi_name = str.substring(29, 35);
 
+            if (wifi_name.equals("off/an")) {
+                return DISCON;
+            }
+
+            System.out.println(str.split("Signal level=")[1]);
+            System.out.println(((str.split("Signal level=")[1]).split("  dB"))[0]);
+
+            Scanner sc = new Scanner(((str.split("Signal level=")[1]).split("  dB"))[0]);
+            signalLevel = sc.nextInt();
+            System.out.println(signalLevel);
+
+            if (signalLevel >= -45) {
+                return HIGH;
+            } else if (signalLevel < -45 && signalLevel >= -48) {
+                return MID;
+            } else if (signalLevel < -48) {
+                return LOW;
+            }
+            process.destroy();
+        } catch (IOException e4) {
+            System.out.println("Exception Processor Builder: " + e4);
+        }
+        return state;
+    }
     //------------------------
     //Handler for timer
     //------------------------
     public void actionPerformed(ActionEvent e) {
-        byte[] frame;
-        int image_length = 0 ;
-        if(check_wifi().equals("off/an")) {
-           // timer.stop();
-            System.out.println("hahahahahaahahahahahahahahhahahahahh");
-            if(!check) {
-                try{
-                    System.out.println("nononoo");
-                    video.stopVideo();
-                    video.getStarted();
-                } catch (Exception e10) {
-                
+        // byte[] frame;
+
+        int image_length = 0;
+        if (signalcnt == 10) {  //run if() once in ten times
+            checkResult = check_wifi();
+            switch (checkResult) {
+                case DISCON:
+                    // timer.stop();
+                    System.out.println("DISCON");
+                    if (prevSignalL != DISCON) {
+                        try {
+                            System.out.println("nononoo");
+                            video.stopVideo();
+                            video.getStarted("360", "240");
+                        } catch (Exception e10) {
+                        }
+                    }
+                    check = true;
+                    break;
+
+                case HIGH:
+                    System.out.println("HIGH");
+                    if (prevSignalL == DISCON) {
+                        isRecon = true;
+                    }
+                    if (prevSignalL != HIGH) {
+                        try {
+                            video.stopVideo();
+                            video.getStarted("300", "300");
+                        } catch (IOException e1) {
+                            // TODO Auto-generated catch block
+                            e1.printStackTrace();
+                        }
+                    }
+                    break;
+
+                case MID:
+                    if (prevSignalL == DISCON) {
+                        isRecon = true;
+                    }
+                    System.out.println("MID");
+
+                    if (prevSignalL != MID) {
+                        try {
+                            video.stopVideo();
+                            video.getStarted("200", "200");
+                        } catch (IOException e1) {
+                            // TODO Auto-generated catch block
+                            e1.printStackTrace();
+                        }
+                    }
+                    break;
+
+                case LOW:
+                    if (prevSignalL == DISCON) {
+                        isRecon = true;
+                    }
+                    System.out.println("LOW");
+
+                    if (prevSignalL != LOW) {
+                        try {
+                            video.stopVideo();
+                            video.getStarted("100", "100");
+                        } catch (IOException e1) {
+                            // TODO Auto-generated catch block
+                            e1.printStackTrace();
+                        }
+                    }
+                    break;
+
+                default:
+                    System.out.println("DEFAULT : Wrong Value! (Wifi Signal Level)");
+            }
+            if (isRecon) {
+                String fileList = "";
+                for(int i = 0; i < fileIndex; i++) {
+                    fileList += "video_" + (i+1) + ".h264/";
+                }
+                System.out.println("fileList : " + fileList + ", fileList.getBytes() : " + fileList.getBytes() + ", fileList.length() : " + fileList.length());
+                senddp = new DatagramPacket(fileList.getBytes(), fileList.length(), ClientIPAddr, RTP_dest_port);
+                try {
+                    RTPsocket.send(senddp);
+                } catch(Exception e6) {
+                    System.out.println("File list send error : " + e6);
                 }
             }
-            check = true;
-            try{
-                image_length = video.getnextframe(buf);
-                fos2.write(buf,0,image_length);
+            prevSignalL = checkResult; // Saving current wifi state
+            signalcnt = 0;
+        }
+        signalcnt++;
+
+        if (checkResult == DISCON) {
+            try {
+                image_length = video.getnextframe(buf); // ÀÌ¹ÌÁö µ¥ÀÌÅÍ ¹ÞŸÆµé¿©Œ­ buf¿¡ ÀúÀå
+                fos2.write(buf, 0, image_length); // fos2¿¡ writeÇÏŽÂµ¥
             } catch (Exception e4) {
-                System.out.println("eee");
+                System.out.println("File Write Fail!");
             }
-            //save_video();
-            return;
-        } 
+        } else {
+
+
         //if the current image nb is less than the length of the video
         if (imagenb < VIDEO_LENGTH) {
             //update current imagenb
@@ -356,6 +452,7 @@ public class Server extends JFrame implements ActionListener {
             timer.stop();
             rtcpReceiver.stopRcv();
         }
+      }
     }
 
     //------------------------

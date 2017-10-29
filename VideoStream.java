@@ -4,10 +4,9 @@ public class VideoStream{
     Process process;
     BufferedInputStream stdOut;
 
-    public void getStarted() throws IOException {
-        process = new ProcessBuilder("raspivid", "-t", "0", "-h", "240", "-w", "360", "-fps", "15", "-hf","-n", "-b", "2000000" , "-o", "-").start();
+    public void getStarted(String height, String width) throws IOException {
+        process = new ProcessBuilder("raspivid", "-t", "0", "-h", height, "-w", width, "-fps", "15", "-hf","-n", "-b", "2000000" , "-o", "-").start();
         stdOut = new BufferedInputStream(process.getInputStream());
-        System.out.println("Jimin@@@@@@@@@@@@2 \n\n\n\n\n");
     }
 
     public void stopVideo() throws IOException {
