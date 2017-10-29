@@ -316,6 +316,7 @@ public class Server extends JFrame implements ActionListener {
                     if (prevSignalL != DISCON) {
                         try {
                             System.out.println("nononoo");
+                            sendChange();
                             video.stopVideo();
                             video.getStarted("360", "240");
                         } catch (Exception e10) {
@@ -330,6 +331,7 @@ public class Server extends JFrame implements ActionListener {
                     }
                     if (prevSignalL != HIGH) {
                         try {
+                            sendChange();
                             video.stopVideo();
                             video.getStarted("300", "300");
                         } catch (IOException e1) {
@@ -346,6 +348,7 @@ public class Server extends JFrame implements ActionListener {
                     System.out.println("MID");
                     if (prevSignalL != MID) {
                         try {
+                            sendChange();
                             video.stopVideo();
                             video.getStarted("200", "200");
                         } catch (IOException e1) {
@@ -362,6 +365,7 @@ public class Server extends JFrame implements ActionListener {
                     System.out.println("LOW");
                     if (prevSignalL != LOW) {
                         try {
+                            sendChange();
                             video.stopVideo();
                             video.getStarted("100", "100");
                         } catch (IOException e1) {
@@ -645,6 +649,17 @@ public class Server extends JFrame implements ActionListener {
             RTSPBufferedWriter.write("Session: "+RTSPid+CRLF);
             RTSPBufferedWriter.flush();
             System.out.println("RTSP Server - Sent response to Client.");
+        } catch(Exception ex) {
+            System.out.println("Exception caught3: "+ex);
+            System.exit(0);
+        }
+    }
+
+    private void sendChange() {
+        try {
+            RTSPBufferedWriter.write("WARNING WIFI CHANGE!!!!!!!!!!!!!!!!!");
+            RTSPBufferedWriter.flush();
+            System.out.println("RTSP Server - Sent Change to Client.");
         } catch(Exception ex) {
             System.out.println("Exception caught3: "+ex);
             System.exit(0);
