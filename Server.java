@@ -17,7 +17,7 @@ public class Server extends JFrame implements ActionListener {
     final int MID = 2;
     final int LOW = 3;
     final int DISCON = 0;
-    int prevSignalL = -1;
+    int prevSignalL = 1;
     boolean isRecon = false;
     int checkResult = -2;
     int signalcnt = 0;
@@ -261,8 +261,12 @@ public class Server extends JFrame implements ActionListener {
             }
             else if (request_type == WIFI) {
                 System.out.println("!!!!!!!!!!!!!!!!!!!!!");
-                server.sendChange();
-                server.wifiHandler();
+                if(!server.wifiHandler()) {
+                    server.sendChange("300");
+                } else {
+                    server.sendChange("400");
+                }
+                System.out.println("out!!!!!!!!!!!!!!!!");
             }
         }
     }
@@ -306,8 +310,11 @@ public class Server extends JFrame implements ActionListener {
         return state;
     }
 
-    public void wifiHandler() {
+    public boolean  wifiHandler() {
         checkResult = check_wifi();
+        if(prevSignalL == checkResult) {
+            return false;
+        }
         switch (checkResult) {
             case DISCON: {
                 // timer.stop();
@@ -315,7 +322,6 @@ public class Server extends JFrame implements ActionListener {
                 if (prevSignalL != DISCON) {
                     try {
                         System.out.println("nononoo");
-                        sendChange();
                         video.stopVideo();
                         video.getStarted("360", "240");
                     } catch (Exception e10) {
@@ -330,7 +336,6 @@ public class Server extends JFrame implements ActionListener {
                 }
                 if (prevSignalL != HIGH) {
                     try {
-                        sendChange();
                         video.stopVideo();
                         video.getStarted("300", "300");
                     } catch (IOException e1) {
@@ -347,7 +352,6 @@ public class Server extends JFrame implements ActionListener {
                 System.out.println("MID");
                 if (prevSignalL != MID) {
                     try {
-                        sendChange();
                         video.stopVideo();
                         video.getStarted("200", "200");
                     } catch (IOException e1) {
@@ -364,7 +368,6 @@ public class Server extends JFrame implements ActionListener {
                 System.out.println("LOW");
                 if (prevSignalL != LOW) {
                     try {
-                        sendChange();
                         video.stopVideo();
                         video.getStarted("100", "100");
                     } catch (IOException e1) {
@@ -395,6 +398,7 @@ public class Server extends JFrame implements ActionListener {
         }
         prevSignalL = checkResult; // Saving current wifi state
 
+        return true;
     }
 
     //------------------------
@@ -661,10 +665,9 @@ public class Server extends JFrame implements ActionListener {
         }
     }
 
-    private void sendChange() {
+    private void sendChange(String str) {
         try {
-            RTSPBufferedWriter.write("RTSP/1.0 300 OK"+CRLF);
-            RTSPBufferedWriter.write("WARNING WIFI CHANGE!!!!!!!!!!!!!!!!!");
+            RTSPBufferedWriter.write("RTSP/1.0 " + str +" OK"+CRLF);
             RTSPBufferedWriter.flush();
             System.out.println("RTSP Server - Sent Change to Client.");
         } catch(Exception ex) {
