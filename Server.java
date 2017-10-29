@@ -68,6 +68,7 @@ public class Server extends JFrame implements ActionListener {
     final static int PAUSE = 5;
     final static int TEARDOWN = 6;
     final static int DESCRIBE = 7;
+    final static int WIFI = 8;
 
     static int state; //RTSP Server state == INIT or READY or PLAY
     Socket RTSPsocket; //socket used to send/receive RTSP messages
@@ -258,6 +259,11 @@ public class Server extends JFrame implements ActionListener {
                 System.out.println("Received DESCRIBE request");
                 server.sendDescribe();
             }
+            else if (request_type == WIFI) {
+                System.out.println("!!!!!!!!!!!!!!!!!!!!!");
+                server.sendChange();
+                server.wifiHandler();
+            }
         }
     }
 
@@ -300,6 +306,97 @@ public class Server extends JFrame implements ActionListener {
         return state;
     }
 
+    public void wifiHandler() {
+        checkResult = check_wifi();
+        switch (checkResult) {
+            case DISCON: {
+                // timer.stop();
+                System.out.println("DISCON");
+                if (prevSignalL != DISCON) {
+                    try {
+                        System.out.println("nononoo");
+                        sendChange();
+                        video.stopVideo();
+                        video.getStarted("360", "240");
+                    } catch (Exception e10) {
+                    }
+                }
+                break;
+            }
+            case HIGH: {
+                System.out.println("HIGH");
+                if (prevSignalL == DISCON) {
+                    isRecon = true;
+                }
+                if (prevSignalL != HIGH) {
+                    try {
+                        sendChange();
+                        video.stopVideo();
+                        video.getStarted("300", "300");
+                    } catch (IOException e1) {
+                        // TODO Auto-generated catch block
+                        e1.printStackTrace();
+                    }
+                }
+                break;
+            }
+            case MID: {
+                if (prevSignalL == DISCON) {
+                    isRecon = true;
+                }
+                System.out.println("MID");
+                if (prevSignalL != MID) {
+                    try {
+                        sendChange();
+                        video.stopVideo();
+                        video.getStarted("200", "200");
+                    } catch (IOException e1) {
+                        // TODO Auto-generated catch block
+                        e1.printStackTrace();
+                    }
+                }
+                break;
+            }
+            case LOW: {
+                if (prevSignalL == DISCON) {
+                    isRecon = true;
+                }
+                System.out.println("LOW");
+                if (prevSignalL != LOW) {
+                    try {
+                        sendChange();
+                        video.stopVideo();
+                        video.getStarted("100", "100");
+                    } catch (IOException e1) {
+                        // TODO Auto-generated catch block
+                        e1.printStackTrace();
+                    }
+                }
+                break;
+            }
+            default: {
+                System.out.println("DEFAULT : Wrong Value! (Wifi Signal Level)");
+            }
+        }
+
+        if (isRecon) {
+            String fileList = "";
+            for(int i = 0; i < fileIndex; i++) {
+                fileList += "video_" + (i+1) + ".h264/";
+            }
+            System.out.println("fileList : " + fileList + ", fileList.getBytes() : " + fileList.getBytes() + ", fileList.length() : " + fileList.length());
+            senddp = new DatagramPacket(fileList.getBytes(), fileList.length(), ClientIPAddr, RTP_dest_port);
+            try {
+                RTPsocket.send(senddp);
+                isRecon = false;
+            } catch(Exception e6) {
+                System.out.println("File list send error : " + e6);
+            }
+        }
+        prevSignalL = checkResult; // Saving current wifi state
+
+    }
+
     //------------------------
     //Handler for timer
     //------------------------
@@ -307,98 +404,6 @@ public class Server extends JFrame implements ActionListener {
         byte[] frame;
         int image_length = 0 ;
 
-        if (signalcnt == 50) {  //run if() once in ten times
-            checkResult = check_wifi();
-            switch (checkResult) {
-                case DISCON: {
-                    // timer.stop();
-                    System.out.println("DISCON");
-                    if (prevSignalL != DISCON) {
-                        try {
-                            System.out.println("nononoo");
-                            sendChange();
-                            video.stopVideo();
-                            video.getStarted("360", "240");
-                        } catch (Exception e10) {
-                        }
-                    }
-                    break;
-                }
-                case HIGH: {
-                    System.out.println("HIGH");
-                    if (prevSignalL == DISCON) {
-                        isRecon = true;
-                    }
-                    if (prevSignalL != HIGH) {
-                        try {
-                            sendChange();
-                            video.stopVideo();
-                            video.getStarted("300", "300");
-                        } catch (IOException e1) {
-                            // TODO Auto-generated catch block
-                            e1.printStackTrace();
-                        }
-                    }
-                    break;
-                }
-                case MID: {
-                    if (prevSignalL == DISCON) {
-                        isRecon = true;
-                    }
-                    System.out.println("MID");
-                    if (prevSignalL != MID) {
-                        try {
-                            sendChange();
-                            video.stopVideo();
-                            video.getStarted("200", "200");
-                        } catch (IOException e1) {
-                            // TODO Auto-generated catch block
-                            e1.printStackTrace();
-                        }
-                    }
-                    break;
-                }
-                case LOW: {
-                    if (prevSignalL == DISCON) {
-                        isRecon = true;
-                    }
-                    System.out.println("LOW");
-                    if (prevSignalL != LOW) {
-                        try {
-                            sendChange();
-                            video.stopVideo();
-                            video.getStarted("100", "100");
-                        } catch (IOException e1) {
-                            // TODO Auto-generated catch block
-                            e1.printStackTrace();
-                        }
-                    }
-                    break;
-                }
-                default: {
-                    System.out.println("DEFAULT : Wrong Value! (Wifi Signal Level)");
-                }
-            }
-
-            if (isRecon) {
-                String fileList = "";
-                for(int i = 0; i < fileIndex; i++) {
-                    fileList += "video_" + (i+1) + ".h264/";
-                }
-                System.out.println("fileList : " + fileList + ", fileList.getBytes() : " + fileList.getBytes() + ", fileList.length() : " + fileList.length());
-                senddp = new DatagramPacket(fileList.getBytes(), fileList.length(), ClientIPAddr, RTP_dest_port);
-                try {
-                    RTPsocket.send(senddp);
-                    isRecon = false;
-                } catch(Exception e6) {
-                    System.out.println("File list send error : " + e6);
-                }
-            }
-            prevSignalL = checkResult; // Saving current wifi state
-            signalcnt = 0;
-        }
-
-        signalcnt++;
         if (checkResult == DISCON) {
             try {
                 image_length = video.getnextframe(buf); // ÀÌ¹ÌÁö µ¥ÀÌÅÍ ¹ÞŸÆµé¿©Œ­ buf¿¡ ÀúÀå
@@ -409,7 +414,6 @@ public class Server extends JFrame implements ActionListener {
             // save_video();
             return;
         }
-
 
         //if the current image nb is less than the length of the video
         if (imagenb < VIDEO_LENGTH) {
@@ -578,6 +582,8 @@ public class Server extends JFrame implements ActionListener {
                 request_type = TEARDOWN;
             else if ((new String(request_type_string)).compareTo("DESCRIBE") == 0)
                 request_type = DESCRIBE;
+            else if ((new String(request_type_string)).compareTo("WIFI") == 0)
+                request_type = WIFI;
 
             if (request_type == SETUP) {
                 //extract VideoFileName from RequestLine
@@ -658,7 +664,6 @@ public class Server extends JFrame implements ActionListener {
     private void sendChange() {
         try {
             RTSPBufferedWriter.write("RTSP/1.0 300 OK"+CRLF);
-            RTSPBufferedWriter.write("CSeq: "+RTSPSeqNb+CRLF);
             RTSPBufferedWriter.write("WARNING WIFI CHANGE!!!!!!!!!!!!!!!!!");
             RTSPBufferedWriter.flush();
             System.out.println("RTSP Server - Sent Change to Client.");
