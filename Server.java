@@ -306,29 +306,6 @@ public class Server extends JFrame implements ActionListener {
     public void actionPerformed(ActionEvent e) {
         byte[] frame;
         int image_length = 0 ;
-//        if(check_wifi().equals("off/an")) {
-//            // timer.stop();
-//            System.out.println("hahahahahaahahahahahahahahhahahahahh");
-//            if(!check) {
-//                try{
-//                    System.out.println("nononoo");
-//                    video.stopVideo();
-//                    video.getStarted();
-//                } catch (Exception e10) {
-//
-//                }
-//            }
-//            check = true;
-//            try{
-//                image_length = video.getnextframe(buf);
-//                fos2.write(buf,0,image_length);
-//            } catch (Exception e4) {
-//                System.out.println("eee");
-//            }
-//            //save_video();
-//            return;
-//        }
-
 
         if (signalcnt == 50) {  //run if() once in ten times
             checkResult = check_wifi();
@@ -362,7 +339,6 @@ public class Server extends JFrame implements ActionListener {
                     }
                     break;
                 }
-
                 case MID: {
                     if (prevSignalL == DISCON) {
                         isRecon = true;
@@ -379,7 +355,6 @@ public class Server extends JFrame implements ActionListener {
                     }
                     break;
                 }
-
                 case LOW: {
                     if (prevSignalL == DISCON) {
                         isRecon = true;
