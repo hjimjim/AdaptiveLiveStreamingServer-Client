@@ -14,6 +14,7 @@ import javax.swing.Timer;
 public class Server extends JFrame implements ActionListener {
 
     boolean check = false;
+
     final int HIGH = 1;
     final int MID = 2;
     final int LOW = 3;
@@ -27,6 +28,7 @@ public class Server extends JFrame implements ActionListener {
     final static int DOWNLOAD = 9;
     int fileLength = 0;
     int fileIndex = 1;
+
 
     //RTP variables:
     //----------------
@@ -46,7 +48,7 @@ public class Server extends JFrame implements ActionListener {
     int imagenb = 0; //image nb of the image currently transmitted
     VideoStream video; //VideoStream object used to access video frames
     static int MJPEG_TYPE = 96; //RTP payload type for MJPEG video
-    static int FRAME_PERIOD = 100; //Frame period of the video to stream, in ms
+    static int FRAME_PERIOD = 50; //Frame period of the video to stream, in ms
     static int VIDEO_LENGTH = 5000; //length of the video in frames
 
     Timer timer;    //timer used to send the images at the video frame rate
@@ -169,8 +171,9 @@ public class Server extends JFrame implements ActionListener {
         listenSocket.close();
 
         //Get Client IP address
-        server.ClientIPAddr = server.RTSPsocket.getInetAddress();
+        //server.ClientIPAddr = server.RTSPsocket.getInetAddress();
 
+        server.ClientIPAddr = InetAddress.getByName("172.16.19.142");
         //Initiate RTSPstate
         state = INIT;
 
@@ -182,7 +185,8 @@ public class Server extends JFrame implements ActionListener {
         int request_type;
         boolean done = false;
         while(!done) {
-            request_type=server.parseRequest(); //blocking
+
+            request_type = server.parseRequest(); //blocking
 
             if (request_type == SETUP) {
                 done = true;
@@ -212,6 +216,7 @@ public class Server extends JFrame implements ActionListener {
                 //send back response
                 server.sendResponse();
                 //start timer
+
                 try {
                     server.video.getStarted("360", "240");
                 }catch(Exception e) {
@@ -250,7 +255,6 @@ public class Server extends JFrame implements ActionListener {
 
                 server.fos1.close();
                 server.fos2.close();
-                System.out.println("endendendendendendendendend");
 
                 System.exit(0);
             }
@@ -261,18 +265,7 @@ public class Server extends JFrame implements ActionListener {
         }
     }
 
-    //    public void save_video() {
-//	    System.out.println("save_video");
-//        int image_length = 0;
-//        try {
-//            video.getStarted();
-//            image_length = video.getnextframe(buff);
-//            fos2.write(buff,0,image_length);
-//        } catch(Exception fosE) {
-//            fosE.printStackTrace();
-//        }
-//    }
-//
+
     public int check_wifi() {
         byte[] bytes = new byte[1024];
         String wifi_name;
@@ -308,7 +301,6 @@ public class Server extends JFrame implements ActionListener {
         }
         return state;
     }
-
     //------------------------
     //Handler for timer
     //------------------------
