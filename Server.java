@@ -214,7 +214,7 @@ public class Server extends JFrame implements ActionListener {
                 server.sendResponse();
                 //start timer
                 try {
-                    server.video.getStarted("360", "240");
+                    server.video.getStarted("30");
                 }catch(Exception e) {
                     System.out.println("error from getStarted()");
                 }
@@ -296,11 +296,11 @@ public class Server extends JFrame implements ActionListener {
             signalLevel = sc.nextInt();
             System.out.println(signalLevel);
             //signalLevel = Integer.parseInt(((str.split("Signal level="))[1].split("  dB"))[0]);
-            if (signalLevel >= -45) {
+            if (signalLevel >= -18) {
                 return HIGH;
-            } else if (signalLevel < -45 && signalLevel >= -48) {
+            } else if (signalLevel < -18 && signalLevel >= -30) {
                 return MID;
-            } else if (signalLevel < -48) {
+            } else if (signalLevel < -30) {
                 return LOW;
             }
             process.destroy();
@@ -323,7 +323,7 @@ public class Server extends JFrame implements ActionListener {
                     try {
                         System.out.println("nononoo");
                         video.stopVideo();
-                        video.getStarted("360", "240");
+                        video.getStarted("30");
                     } catch (Exception e10) {
                     }
                 }
@@ -337,7 +337,7 @@ public class Server extends JFrame implements ActionListener {
                 if (prevSignalL != HIGH) {
                     try {
                         video.stopVideo();
-                        video.getStarted("300", "300");
+                        video.getStarted("30");
                     } catch (IOException e1) {
                         // TODO Auto-generated catch block
                         e1.printStackTrace();
@@ -353,7 +353,7 @@ public class Server extends JFrame implements ActionListener {
                 if (prevSignalL != MID) {
                     try {
                         video.stopVideo();
-                        video.getStarted("200", "200");
+                        video.getStarted("15");
                     } catch (IOException e1) {
                         // TODO Auto-generated catch block
                         e1.printStackTrace();
@@ -369,7 +369,7 @@ public class Server extends JFrame implements ActionListener {
                 if (prevSignalL != LOW) {
                     try {
                         video.stopVideo();
-                        video.getStarted("100", "100");
+                        video.getStarted("5");
                     } catch (IOException e1) {
                         // TODO Auto-generated catch block
                         e1.printStackTrace();

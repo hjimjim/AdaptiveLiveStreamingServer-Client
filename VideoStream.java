@@ -4,8 +4,8 @@ public class VideoStream{
     Process process;
     BufferedInputStream stdOut;
 
-    public void getStarted(String height, String width) throws IOException {
-        process = new ProcessBuilder("raspivid", "-t", "0", "-h", height, "-w", height, "-fps", "15", "-hf","-n", "-b", "2000000" , "-o", "-").start();
+    public void getStarted(String fps) throws IOException {
+        process = new ProcessBuilder("raspivid", "-t", "0", "-h", "240", "-w", "320", "-fps", fps, "-hf","-n", "-b", "2000000" , "-o", "-").start();
         stdOut = new BufferedInputStream(process.getInputStream());
     }
 
