@@ -657,6 +657,8 @@ public class Server extends JFrame implements ActionListener {
 
     private void sendChange() {
         try {
+            RTSPBufferedWriter.write("RTSP/1.0 300 OK"+CRLF);
+            RTSPBufferedWriter.write("CSeq: "+RTSPSeqNb+CRLF);
             RTSPBufferedWriter.write("WARNING WIFI CHANGE!!!!!!!!!!!!!!!!!");
             RTSPBufferedWriter.flush();
             System.out.println("RTSP Server - Sent Change to Client.");
