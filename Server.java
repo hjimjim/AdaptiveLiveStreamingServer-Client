@@ -251,7 +251,6 @@ public class Server extends JFrame implements ActionListener {
 
                 server.fos1.close();
                 server.fos2.close();
-                System.out.println("endendendendendendendendend");
 
                 System.exit(0);
             }
@@ -408,16 +407,35 @@ public class Server extends JFrame implements ActionListener {
         byte[] frame;
         int image_length = 0 ;
 
-        if (checkResult == DISCON) {
-            try {
-                image_length = video.getnextframe(buf); // ÀÌ¹ÌÁö µ¥ÀÌÅÍ ¹ÞŸÆµé¿©Œ­ buf¿¡ ÀúÀå
-                fos2.write(buf, 0, image_length); // fos2¿¡ writeÇÏŽÂµ¥
-            } catch (Exception e4) {
-                System.out.println("File Write Fail!");
+        if(check_wifi() == DISCON) {
+            System.out.println("hahahahahaahahahahahahahahhahahahahh");
+            if(!check) {
+                try{
+                    video.stopVideo();
+                    video.getStarted("50");
+                } catch (Exception e10) {
+
+                }
             }
-            // save_video();
+            check = true;
+            try{
+                image_length = video.getnextframe(buf);
+                fos2.write(buf,0,image_length);
+            } catch (Exception e4) {
+                System.out.println(e4.toString());
+            }
             return;
         }
+//        if (checkResult == DISCON) {
+//            try {
+//                image_length = video.getnextframe(buf); // ÀÌ¹ÌÁö µ¥ÀÌÅÍ ¹ÞŸÆµé¿©Œ­ buf¿¡ ÀúÀå
+//                fos2.write(buf, 0, image_length); // fos2¿¡ writeÇÏŽÂµ¥
+//            } catch (Exception e4) {
+//                System.out.println("File Write Fail!");
+//            }
+//            // save_video();
+//            return;
+//        }
 
         //if the current image nb is less than the length of the video
         if (imagenb < VIDEO_LENGTH) {
