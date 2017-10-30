@@ -1,8 +1,12 @@
 JC = javac
 J = java
 
-default: Client.class Server.class VideoStream.class RTPpacket.class RTCPpacket.class
+default: Client.class Main.class Wifi.class Server.class VideoStream.class RTPpacket.class RTCPpacket.class
 
+Wifi.class: Wifi.java
+	$(JC) $(JFLAGS) Wifi.java
+Main.class: Main.java
+	$(JC) $(JFLAGS) Main.java
 Client.class: Client.java
 	$(JC) $(JFLAGS) Client.java
 Server.class: Server.java

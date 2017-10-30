@@ -24,8 +24,8 @@ public class Wifi implements Runnable {
     int fileIndex = 1;
 
 
-    VideoStream video;
-    SharedArea sharedArea;
+    VideoStream video = null;
+    SharedArea sharedArea = null;
     File saveFile = new File("hahaha.h264");
     FileOutputStream fos2 = null;
 
@@ -42,11 +42,11 @@ public class Wifi implements Runnable {
     @Override
     public void run() {
         boolean check = false;
-        int cnt = 50;
+        int cnt = 0;
         while (true) {
 
             if(cnt == 50) {
-                sharedArea.wifi_flag = wifiHandler();
+                this.sharedArea.wifi_flag = wifiHandler();
                 cnt = 0;
             }
             cnt++;
@@ -54,8 +54,8 @@ public class Wifi implements Runnable {
             if(checkResult == DISCON) {
                 if(!check) {
                     try{
-                        video.stopVideo();
-                        video.getStarted("50");
+                        this.video.stopVideo();
+                        this.video.getStarted("50");
                     } catch (Exception e10) {
 
                     }
@@ -64,7 +64,7 @@ public class Wifi implements Runnable {
                 try{
                     System.out.println("hahahahahaahahahahahahahahhahahahahh");
                     byte[] buf = new byte[20000];
-                    int image_length = video.getnextframe(buf);
+                    int image_length = this.video.getnextframe(buf);
                     fos2.write(buf,0,image_length);
                 } catch (Exception e4) {
                     System.out.println(e4.toString());
@@ -169,8 +169,8 @@ public class Wifi implements Runnable {
                 System.out.println("LOW");
                 if (prevSignalL != LOW) {
                     try {
-                        video.stopVideo();
-                        video.getStarted("5");
+                        this.video.stopVideo();
+                        this.video.getStarted("5");
                     } catch (IOException e1) {
                         // TODO Auto-generated catch block
                         e1.printStackTrace();
