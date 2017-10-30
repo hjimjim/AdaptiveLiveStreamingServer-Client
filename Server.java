@@ -10,22 +10,7 @@ import java.awt.event.*;
 import javax.swing.*;
 import javax.swing.Timer;
 
-public class Server extends JFrame implements ActionListener {
-    boolean check = false;
-
-    final int HIGH = 1;
-    final int MID = 2;
-    final int LOW = 3;
-    final int DISCON = 0;
-    int prevSignalL = 1;
-    boolean isRecon = false;
-    int checkResult = -2;
-    int signalcnt = 0;
-
-    final static int FILELIST = 8;
-    final static int DOWNLOAD = 9;
-    int fileLength = 0;
-    int fileIndex = 1;
+public class Server extends JFrame implements ActionListener, Runnable{
 
     //RTP variables:
     //----------------
@@ -89,7 +74,7 @@ public class Server extends JFrame implements ActionListener {
     int congestionLevel;
 
     //Performance optimization and Congestion control
-    CongestionController cc;
+//    CongestionController cc;
 
     File outputFile = new File("video.h264");
     FileOutputStream fos1 = null;
@@ -97,11 +82,12 @@ public class Server extends JFrame implements ActionListener {
     File saveFile = new File("hahaha.h264");
     FileOutputStream fos2 = null;
     final static String CRLF = "\r\n";
+    SharedArea sharedArea;
 
     //--------------------------------
     //Constructor
     //--------------------------------
-    public Server() {
+    public Server(VideoStream videoStream, SharedArea sharedArea) {
 
         //init Frame
         super("RTSP Server");
@@ -113,7 +99,7 @@ public class Server extends JFrame implements ActionListener {
         timer.setCoalesce(true);
 
         //init congestion controller
-        cc = new CongestionController(600);
+//        cc = new CongestionController(600);
 
         //allocate memory for the sending buffer
         buf = new byte[20000];
@@ -144,45 +130,55 @@ public class Server extends JFrame implements ActionListener {
         } catch(Exception e) {
             System.out.println("e");
         }
+
+        this.video = videoStream;
+        this.sharedArea = sharedArea;
     }
 
-    //------------------------------------
-    //main
-    //------------------------------------
-    public static void main(String argv[]) throws Exception
-    {
+
+
+    @Override
+    public void run() {
         //create a Server object
-        Server server = new Server();
 
         //show GUI:
-        server.pack();
-        server.setVisible(true);
-        server.setSize(new Dimension(400, 200));
+        pack();
+        setVisible(true);
+        setSize(new Dimension(400, 200));
 
         //get RTSP socket port from the command line
-        int RTSPport = Integer.parseInt(argv[0]);
-        server.RTSP_dest_port = RTSPport;
+        int RTSPport = 1052;//Integer.parseInt(argv[0]);
+        RTSP_dest_port = RTSPport;
 
         //Initiate TCP connection with the client for the RTSP session
-        ServerSocket listenSocket = new ServerSocket(RTSPport);
-        server.RTSPsocket = listenSocket.accept();
-        listenSocket.close();
+        ServerSocket listenSocket = null;
+        try {
+            listenSocket = new ServerSocket(RTSPport);
+            RTSPsocket = listenSocket.accept();
+            listenSocket.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
         //Get Client IP address
-        server.ClientIPAddr = server.RTSPsocket.getInetAddress();
+        ClientIPAddr = RTSPsocket.getInetAddress();
 
         //Initiate RTSPstate
         state = INIT;
 
         //Set input and output stream filters:
-        RTSPBufferedReader = new BufferedReader(new InputStreamReader(server.RTSPsocket.getInputStream()) );
-        RTSPBufferedWriter = new BufferedWriter(new OutputStreamWriter(server.RTSPsocket.getOutputStream()) );
+        try {
+            RTSPBufferedReader = new BufferedReader(new InputStreamReader(RTSPsocket.getInputStream()) );
+            RTSPBufferedWriter = new BufferedWriter(new OutputStreamWriter(RTSPsocket.getOutputStream()) );
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
         //Wait for the SETUP message from the client
         int request_type;
         boolean done = false;
         while(!done) {
-            request_type=server.parseRequest(); //blocking
+            request_type = parseRequest(); //blocking
 
             if (request_type == SETUP) {
                 done = true;
@@ -192,34 +188,37 @@ public class Server extends JFrame implements ActionListener {
                 System.out.println("New RTSP state: READY");
 
                 //Send response
-                server.sendResponse();
+                sendResponse();
 
                 //init the VideoStream object:
-                server.video = new VideoStream();
+                //video = new VideoStream();
 
                 //init RTP and RTCP sockets
-                server.RTPsocket = new DatagramSocket();
-                server.RTCPsocket = new DatagramSocket(RTCP_RCV_PORT);
-                request_type = PLAY;
+                try {
+                    RTPsocket = new DatagramSocket();
+                    RTCPsocket = new DatagramSocket(RTCP_RCV_PORT);
+                } catch (SocketException e) {
+                    e.printStackTrace();
+                }
             }
         }
 
         //loop to handle RTSP requests
         while(true) {
             //parse the request
-            request_type = server.parseRequest(); //blocking
+            request_type = parseRequest(); //blocking
 
             if ((request_type == PLAY) && (state == READY)) {
                 //send back response
-                server.sendResponse();
+                sendResponse();
                 //start timer
                 try {
-                    server.video.getStarted("30");
+                    video.getStarted("30");
                 }catch(Exception e) {
                     System.out.println("error from getStarted()");
                 }
-                server.timer.start();
-                server.rtcpReceiver.startRcv();
+                timer.start();
+                rtcpReceiver.startRcv();
                 //update state
                 state = PLAYING;
 
@@ -227,12 +226,12 @@ public class Server extends JFrame implements ActionListener {
             }
             else if ((request_type == PAUSE) && (state == PLAYING)) {
                 //send back response
-                server.sendResponse();
+                sendResponse();
                 //stop timer
 
                 System.out.println("222");
-                server.timer.stop();
-                server.rtcpReceiver.stopRcv();
+                timer.stop();
+                rtcpReceiver.stopRcv();
 
                 //update state
                 state = READY;
@@ -240,165 +239,40 @@ public class Server extends JFrame implements ActionListener {
             }
             else if (request_type == TEARDOWN) {
                 //send back response
-                server.sendResponse();
+                sendResponse();
                 //stop timer
 
-                server.timer.stop();
-                server.rtcpReceiver.stopRcv();
+                timer.stop();
+                rtcpReceiver.stopRcv();
                 //close sockets
-                server.RTSPsocket.close();
-                server.RTPsocket.close();
-
-                server.fos1.close();
-                server.fos2.close();
-
+                try {
+                    RTSPsocket.close();
+                    RTPsocket.close();
+                    fos1.close();
+                    fos2.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
                 System.exit(0);
             }
             else if (request_type == DESCRIBE) {
                 System.out.println("Received DESCRIBE request");
-                server.sendDescribe();
+                sendDescribe();
             }
             else if (request_type == WIFI) {
                 System.out.println("!!!!!!!!!!!!!!!!!!!!!");
-                if(!server.wifiHandler()) {
-                    server.sendChange("300");
+                if(!sharedArea.wifi_flag) {
+                    sendChange("300");
                 } else {
-                    server.sendChange("400");
+                    sendChange("400");
                 }
                 System.out.println("out!!!!!!!!!!!!!!!!");
             }
         }
     }
 
-    public int check_wifi() { // 0ÀÌžé ²šÁø°Å, 1ÀÌžé ¿ÍÀÌÆÄÀÌ ŒŒ±â ÇÏ, 2ÀÌžé ŒŒ±â Áß, 3ÀÌžé »ó
 
-        System.out.println("check_wifi");
-        byte[] bytes = new byte[1024];
-        int state = -1;
-        String wifi_name = "";
-        int signalLevel = 0;
-        try {
 
-            Process process = new ProcessBuilder("iwconfig", "wlan0").start();
-            InputStream input = process.getInputStream();
-            int n = input.read(bytes, 0, 312); // check iwconfig
-            String str = new String(bytes);
-            // wifi
-            wifi_name = str.substring(29, 35);
-            if (wifi_name.equals("off/an")) {
-                return DISCON;
-            }
-            System.out.println(str.split("Signal level=")[1]);
-            System.out.println(((str.split("Signal level=")[1]).split("  dB"))[0]);
-
-            Scanner sc = new Scanner(((str.split("Signal level=")[1]).split("  dB"))[0]);
-            signalLevel = sc.nextInt();
-            System.out.println(signalLevel);
-            //signalLevel = Integer.parseInt(((str.split("Signal level="))[1].split("  dB"))[0]);
-            if (signalLevel >= -18) {
-                return HIGH;
-            } else if (signalLevel < -18 && signalLevel >= -30) {
-                return MID;
-            } else if (signalLevel < -30) {
-                return LOW;
-            }
-            process.destroy();
-        } catch (IOException e4) {
-            System.out.println("Exception Processor Builder: " + e4);
-        }
-        return state;
-    }
-
-    public boolean  wifiHandler() {
-        checkResult = check_wifi();
-        if(prevSignalL == checkResult) {
-            return false;
-        }
-        switch (checkResult) {
-            case DISCON: {
-                // timer.stop();
-                System.out.println("DISCON");
-                if (prevSignalL != DISCON) {
-                    try {
-                        System.out.println("nononoo");
-                        video.stopVideo();
-                        video.getStarted("30");
-                    } catch (Exception e10) {
-                    }
-                }
-                break;
-            }
-            case HIGH: {
-                System.out.println("HIGH");
-                if (prevSignalL == DISCON) {
-                    isRecon = true;
-                }
-                if (prevSignalL != HIGH) {
-                    try {
-                        video.stopVideo();
-                        video.getStarted("30");
-                    } catch (IOException e1) {
-                        // TODO Auto-generated catch block
-                        e1.printStackTrace();
-                    }
-                }
-                break;
-            }
-            case MID: {
-                if (prevSignalL == DISCON) {
-                    isRecon = true;
-                }
-                System.out.println("MID");
-                if (prevSignalL != MID) {
-                    try {
-                        video.stopVideo();
-                        video.getStarted("15");
-                    } catch (IOException e1) {
-                        // TODO Auto-generated catch block
-                        e1.printStackTrace();
-                    }
-                }
-                break;
-            }
-            case LOW: {
-                if (prevSignalL == DISCON) {
-                    isRecon = true;
-                }
-                System.out.println("LOW");
-                if (prevSignalL != LOW) {
-                    try {
-                        video.stopVideo();
-                        video.getStarted("5");
-                    } catch (IOException e1) {
-                        // TODO Auto-generated catch block
-                        e1.printStackTrace();
-                    }
-                }
-                break;
-            }
-            default: {
-                System.out.println("DEFAULT : Wrong Value! (Wifi Signal Level)");
-            }
-        }
-
-        if (isRecon) {
-            String fileList = "";
-            for(int i = 0; i < fileIndex; i++) {
-                fileList += "video_" + (i+1) + ".h264/";
-            }
-            System.out.println("fileList : " + fileList + ", fileList.getBytes() : " + fileList.getBytes() + ", fileList.length() : " + fileList.length());
-            senddp = new DatagramPacket(fileList.getBytes(), fileList.length(), ClientIPAddr, RTP_dest_port);
-            try {
-                RTPsocket.send(senddp);
-                isRecon = false;
-            } catch(Exception e6) {
-                System.out.println("File list send error : " + e6);
-            }
-        }
-        prevSignalL = checkResult; // Saving current wifi state
-
-        return true;
-    }
 
     //------------------------
     //Handler for timer
@@ -407,25 +281,7 @@ public class Server extends JFrame implements ActionListener {
         byte[] frame;
         int image_length = 0 ;
 
-        if(check_wifi() == DISCON) {
-            System.out.println("hahahahahaahahahahahahahahhahahahahh");
-            if(!check) {
-                try{
-                    video.stopVideo();
-                    video.getStarted("50");
-                } catch (Exception e10) {
 
-                }
-            }
-            check = true;
-            try{
-                image_length = video.getnextframe(buf);
-                fos2.write(buf,0,image_length);
-            } catch (Exception e4) {
-                System.out.println(e4.toString());
-            }
-            return;
-        }
 //        if (checkResult == DISCON) {
 //            try {
 //                image_length = video.getnextframe(buf); // ÀÌ¹ÌÁö µ¥ÀÌÅÍ ¹ÞŸÆµé¿©Œ­ buf¿¡ ÀúÀå
@@ -489,27 +345,27 @@ public class Server extends JFrame implements ActionListener {
     //------------------------
     //Controls RTP sending rate based on traffic
     //------------------------
-    class CongestionController implements ActionListener {
-        private Timer ccTimer;
-        int interval;   //interval to check traffic stats
-        int prevLevel;  //previously sampled congestion level
-
-        public CongestionController(int interval) {
-            this.interval = interval;
-            ccTimer = new Timer(interval, this);
-            ccTimer.start();
-        }
-
-        public void actionPerformed(ActionEvent e) {
-            //adjust the send rate
-            if (prevLevel != congestionLevel) {
-                sendDelay = FRAME_PERIOD + congestionLevel * (int)(FRAME_PERIOD * 0.1);
-                timer.setDelay(sendDelay);
-                prevLevel = congestionLevel;
-                System.out.println("Send delay changed to: " + sendDelay);
-            }
-        }
-    }
+//    class CongestionController implements ActionListener {
+//        private Timer ccTimer;
+//        int interval;   //interval to check traffic stats
+//        int prevLevel;  //previously sampled congestion level
+//
+//        public CongestionController(int interval) {
+//            this.interval = interval;
+//            ccTimer = new Timer(interval, this);
+//            ccTimer.start();
+//        }
+//
+//        public void actionPerformed(ActionEvent e) {
+//            //adjust the send rate
+//            if (prevLevel != congestionLevel) {
+//                sendDelay = FRAME_PERIOD + congestionLevel * (int)(FRAME_PERIOD * 0.1);
+//                timer.setDelay(sendDelay);
+//                prevLevel = congestionLevel;
+//                System.out.println("Send delay changed to: " + sendDelay);
+//            }
+//        }
+//    }
 
     //------------------------
     //Listener for RTCP packets sent from client
