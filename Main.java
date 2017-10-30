@@ -13,8 +13,8 @@ public class Main {
         Thread server_thread = new Thread(server);
         Thread wifi_thread = new Thread(wifi);
 
-
         server_thread.start();
+        wifi_thread.start();
     }
 }
 
