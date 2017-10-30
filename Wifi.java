@@ -45,6 +45,10 @@ public class Wifi implements Runnable {
         int cnt = 0;
         while (true) {
 
+            if(!this.sharedArea.start_flag) {
+                continue;
+            }
+
             if(cnt == 50) {
                 this.sharedArea.wifi_flag = wifiHandler();
                 cnt = 0;
