@@ -47,12 +47,15 @@ public class Wifi implements Runnable {
             if(!this.sharedArea.start_flag) {
                 continue;
             }
-            if(this.sharedArea.wifi_check) {
+            //if(this.sharedArea.wifi_check) {
+            if(cnt == 50000000){
                 //Fixme:Jimin
                 //need to change
                 this.sharedArea.wifi_flag = wifiHandler();
                 this.sharedArea.wifi_check = false;
+                cnt=0;
             }
+            cnt++;
             //Fixme:Jimin
             if(checkResult == DISCON) {
                 if(!check) {
