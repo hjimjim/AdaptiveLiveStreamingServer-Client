@@ -263,6 +263,12 @@ public class Server extends JFrame implements ActionListener, Runnable{
             }
             else if (request_type == WIFI) {
                 System.out.println("------------------------------ CHECK WIFI ------------------------------");
+                sharedArea.wifi_check = true;
+                try {
+                    Thread.sleep(100);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
                 if(!sharedArea.wifi_flag) {
                     sendChange("300");
                 } else {
