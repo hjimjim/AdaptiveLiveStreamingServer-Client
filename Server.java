@@ -88,9 +88,11 @@ public class Server extends JFrame implements ActionListener, Runnable{
     //Constructor
     //--------------------------------
     public Server(VideoStream videoStream, SharedArea sharedArea) {
-
         //init Frame
         super("RTSP Server");
+
+        this.video = videoStream;
+        this.sharedArea = sharedArea;
 
         //init RTP sending Timer
         sendDelay = FRAME_PERIOD;
@@ -124,6 +126,7 @@ public class Server extends JFrame implements ActionListener, Runnable{
 
         //Video encoding and quality
 
+
         try {
             fos1 = new FileOutputStream(outputFile,true);
             fos2 = new FileOutputStream(saveFile,true);
@@ -131,8 +134,7 @@ public class Server extends JFrame implements ActionListener, Runnable{
             System.out.println("e");
         }
 
-        this.video = videoStream;
-        this.sharedArea = sharedArea;
+
     }
 
 
@@ -146,6 +148,7 @@ public class Server extends JFrame implements ActionListener, Runnable{
         setVisible(true);
         setSize(new Dimension(400, 200));
 
+        //Fixme: need to change so we can get port number while exec
         //get RTSP socket port from the command line
         int RTSPport = 1052;//Integer.parseInt(argv[0]);
         RTSP_dest_port = RTSPport;
@@ -171,7 +174,8 @@ public class Server extends JFrame implements ActionListener, Runnable{
             RTSPBufferedReader = new BufferedReader(new InputStreamReader(RTSPsocket.getInputStream()) );
             RTSPBufferedWriter = new BufferedWriter(new OutputStreamWriter(RTSPsocket.getOutputStream()) );
         } catch (IOException e) {
-            e.printStackTrace();
+            //e.printStackTrace();
+            System.out.println("Exception Caught1 : " + e.toString());
         }
 
         //Wait for the SETUP message from the client
@@ -189,9 +193,6 @@ public class Server extends JFrame implements ActionListener, Runnable{
 
                 //Send response
                 sendResponse();
-
-                //init the VideoStream object:
-                //video = new VideoStream();
 
                 //init RTP and RTCP sockets
                 try {
@@ -211,13 +212,13 @@ public class Server extends JFrame implements ActionListener, Runnable{
             if ((request_type == PLAY) && (state == READY)) {
                 //send back response
                 sendResponse();
-                //start timer
                 try {
-                    video.getStarted("480","720");
+                    video.getStarted("240", "320");
                     sharedArea.start_flag = true;
                 }catch(Exception e) {
                     System.out.println("error from getStarted()");
                 }
+                //start timer
                 timer.start();
                 rtcpReceiver.startRcv();
                 //update state
@@ -228,9 +229,8 @@ public class Server extends JFrame implements ActionListener, Runnable{
             else if ((request_type == PAUSE) && (state == PLAYING)) {
                 //send back response
                 sendResponse();
-                //stop timer
 
-                System.out.println("222");
+                //stop timer
                 timer.stop();
                 rtcpReceiver.stopRcv();
 
@@ -241,10 +241,11 @@ public class Server extends JFrame implements ActionListener, Runnable{
             else if (request_type == TEARDOWN) {
                 //send back response
                 sendResponse();
-                //stop timer
 
+                //stop timer
                 timer.stop();
                 rtcpReceiver.stopRcv();
+
                 //close sockets
                 try {
                     RTSPsocket.close();
@@ -261,13 +262,13 @@ public class Server extends JFrame implements ActionListener, Runnable{
                 sendDescribe();
             }
             else if (request_type == WIFI) {
-                System.out.println("!!!!!!!!!!!!!!!!!!!!!");
+                System.out.println("------------------------------ CHECK WIFI ------------------------------");
                 if(!sharedArea.wifi_flag) {
                     sendChange("300");
                 } else {
+                    //change
                     sendChange("400");
                 }
-                System.out.println("out!!!!!!!!!!!!!!!!");
             }
         }
     }
@@ -281,18 +282,6 @@ public class Server extends JFrame implements ActionListener, Runnable{
     public void actionPerformed(ActionEvent e) {
         byte[] frame;
         int image_length = 0 ;
-
-
-//        if (checkResult == DISCON) {
-//            try {
-//                image_length = video.getnextframe(buf); // ÀÌ¹ÌÁö µ¥ÀÌÅÍ ¹ÞŸÆµé¿©Œ­ buf¿¡ ÀúÀå
-//                fos2.write(buf, 0, image_length); // fos2¿¡ writeÇÏŽÂµ¥
-//            } catch (Exception e4) {
-//                System.out.println("File Write Fail!");
-//            }
-//            // save_video();
-//            return;
-//        }
 
         //if the current image nb is less than the length of the video
         if (imagenb < VIDEO_LENGTH) {
@@ -393,7 +382,7 @@ public class Server extends JFrame implements ActionListener, Runnable{
             float fractionLost;
 
             try {
-                //Jimin
+                //Fixme: //Jimin
                 //RTCPsocket.setSoTimeout(3000);
                 RTCPsocket.receive(dp);   // Blocking
                 RTCPpacket rtcpPkt = new RTCPpacket(dp.getData(), dp.getLength());
