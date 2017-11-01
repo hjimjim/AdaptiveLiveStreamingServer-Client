@@ -213,7 +213,7 @@ public class Server extends JFrame implements ActionListener, Runnable{
                 sendResponse();
                 //start timer
                 try {
-                    video.getStarted("30");
+                    video.getStarted("480","720");
                     sharedArea.start_flag = true;
                 }catch(Exception e) {
                     System.out.println("error from getStarted()");
