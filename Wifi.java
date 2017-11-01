@@ -128,7 +128,7 @@ public class Wifi implements Runnable {
                     try {
                         System.out.println("nononoo");
                         video.stopVideo();
-                        video.getStarted("480" , "720");
+                        video.getStarted("240" , "320");
                     } catch (Exception e10) {
                     }
                 }
@@ -142,7 +142,7 @@ public class Wifi implements Runnable {
                 if (prevSignalL != HIGH) {
                     try {
                         video.stopVideo();
-                        video.getStarted("480", "720");
+                        video.getStarted("240", "320");
                     } catch (IOException e1) {
                         // TODO Auto-generated catch block
                         e1.printStackTrace();
