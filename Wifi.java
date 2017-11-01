@@ -49,11 +49,11 @@ public class Wifi implements Runnable {
                 continue;
             }
 
-            if(cnt == 50000000) {
-                this.sharedArea.wifi_flag = wifiHandler();
-                cnt = 0;
-            }
-            cnt++;
+//            if(cnt == 50000000) {
+//                this.sharedArea.wifi_flag = wifiHandler();
+//                cnt = 0;
+//            }
+//            cnt++;
 
             if(checkResult == DISCON) {
                 if(!check) {
