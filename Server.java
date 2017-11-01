@@ -9,8 +9,8 @@ import java.util.*;
 import java.awt.event.*;
 import javax.swing.*;
 import javax.swing.Timer;
-
-public class Server extends JFrame implements ActionListener, Runnable{
+//extends JFrame
+public class Server  implements ActionListener, Runnable{
 
     //RTP variables:
     //----------------
@@ -23,7 +23,8 @@ public class Server extends JFrame implements ActionListener, Runnable{
 
     //GUI:
     //----------------
-    JLabel label;
+    //Jimin_GUI
+    //JLabel label;
 
     //Video variables:
     //----------------
@@ -91,7 +92,7 @@ public class Server extends JFrame implements ActionListener, Runnable{
     public Server(VideoStream videoStream, SharedArea sharedArea, Wifi wifi) {
 
         //init Frame
-        super("RTSP Server");
+        //super("RTSP Server");
 
         //init RTP sending Timer
         sendDelay = FRAME_PERIOD;
@@ -107,21 +108,22 @@ public class Server extends JFrame implements ActionListener, Runnable{
         buff = new byte[20000];
 
         //Handler to close the main window
-        addWindowListener(new WindowAdapter() {
-            public void windowClosing(WindowEvent e) {
-                //stop the timer and exit
-                System.out.println("1111");
-                timer.stop();
-                rtcpReceiver.stopRcv();
-                System.exit(0);
-            }});
+        //Jimin_GUI
+//        addWindowListener(new WindowAdapter() {
+//            public void windowClosing(WindowEvent e) {
+//                //stop the timer and exit
+//                System.out.println("1111");
+//                timer.stop();
+//                rtcpReceiver.stopRcv();
+//                System.exit(0);
+//           }});
 
         //init the RTCP packet receiver
         rtcpReceiver = new RtcpReceiver(RTCP_PERIOD);
 
-        //GUI:
-        label = new JLabel("Send frame #        ", JLabel.CENTER);
-        getContentPane().add(label, BorderLayout.CENTER);
+        //Jimin_GUI:
+        //label = new JLabel("Send frame #        ", JLabel.CENTER);
+        //getContentPane().add(label, BorderLayout.CENTER);
 
         //Video encoding and quality
 
@@ -143,10 +145,10 @@ public class Server extends JFrame implements ActionListener, Runnable{
     public void run() {
         //create a Server object
 
-        //show GUI:
-        pack();
-        setVisible(true);
-        setSize(new Dimension(400, 200));
+        //Jimin_GUI show GUI:
+        //pack();
+        //setVisible(true);
+        //setSize(new Dimension(400, 200));
 
         //get RTSP socket port from the command line
         int RTSPport = 1052;//Integer.parseInt(argv[0]);
@@ -333,8 +335,8 @@ public class Server extends JFrame implements ActionListener, Runnable{
                 //print the header bitstream
                 rtp_packet.printheader();
 
-                //update GUI
-                label.setText("Send frame #" + imagenb);
+                //Jimin_GUI: update GUI
+                //label.setText("Send frame #" + imagenb);
             } catch (Exception ex) {
                 System.out.println("Exception caught5: " + ex);
                 //System.exit(0);
