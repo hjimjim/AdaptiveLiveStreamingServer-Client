@@ -7,7 +7,6 @@ public class Main {
         SharedArea sharedArea = new SharedArea();
         VideoStream videoStream = new VideoStream();
         sharedArea.start_flag = false;
-        sharedArea.wifi_check = false;
         Server server = new Server(videoStream, sharedArea);
         Wifi wifi = new Wifi(videoStream, sharedArea);
 
@@ -21,6 +20,5 @@ public class Main {
 
 class SharedArea {
     boolean wifi_flag;
-    boolean wifi_check;
     boolean start_flag;
 }
