@@ -84,10 +84,11 @@ public class Server extends JFrame implements ActionListener, Runnable{
     final static String CRLF = "\r\n";
     SharedArea sharedArea;
 
+    Wifi wifi;
     //--------------------------------
     //Constructor
     //--------------------------------
-    public Server(VideoStream videoStream, SharedArea sharedArea) {
+    public Server(VideoStream videoStream, SharedArea sharedArea, Wifi wifi) {
 
         //init Frame
         super("RTSP Server");
@@ -133,6 +134,7 @@ public class Server extends JFrame implements ActionListener, Runnable{
 
         this.video = videoStream;
         this.sharedArea = sharedArea;
+        this.wifi = wifi;
     }
 
 
@@ -262,7 +264,8 @@ public class Server extends JFrame implements ActionListener, Runnable{
             }
             else if (request_type == WIFI) {
                 System.out.println("!!!!!!!!!!!!!!!!!!!!!");
-                if(!sharedArea.wifi_flag) {
+                //if(!sharedArea.wifi_flag) {
+                if(!wifi.wifiHandler()){
                     sendChange("300");
                 } else {
                     sendChange("400");
