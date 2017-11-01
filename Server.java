@@ -217,7 +217,7 @@ public class Server  implements ActionListener, Runnable{
                 sendResponse();
                 //start timer
                 try {
-                    video.getStarted("30");
+                    video.getStarted("240","320");
                     sharedArea.start_flag = true;
                 }catch(Exception e) {
                     System.out.println("error from getStarted()");
