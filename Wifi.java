@@ -44,22 +44,22 @@ public class Wifi implements Runnable {
         boolean check = false;
         int cnt = 0;
         while (true) {
-
             if(!this.sharedArea.start_flag) {
                 continue;
             }
-
-            if(cnt == 50) {
+            if(cnt == 500000) {
+                //Fixme:Jimin
+                //need to change
                 this.sharedArea.wifi_flag = wifiHandler();
                 cnt = 0;
             }
             cnt++;
-
+            //Fixme:Jimin
             if(checkResult == DISCON) {
                 if(!check) {
                     try{
                         this.video.stopVideo();
-                        this.video.getStarted("50");
+                        this.video.getStarted("240", "320");
                     } catch (Exception e10) {
 
                     }
@@ -128,7 +128,7 @@ public class Wifi implements Runnable {
                     try {
                         System.out.println("nononoo");
                         video.stopVideo();
-                        video.getStarted("30");
+                        video.getStarted("480" , "720");
                     } catch (Exception e10) {
                     }
                 }
@@ -142,7 +142,7 @@ public class Wifi implements Runnable {
                 if (prevSignalL != HIGH) {
                     try {
                         video.stopVideo();
-                        video.getStarted("30");
+                        video.getStarted("480", "720");
                     } catch (IOException e1) {
                         // TODO Auto-generated catch block
                         e1.printStackTrace();
@@ -158,7 +158,7 @@ public class Wifi implements Runnable {
                 if (prevSignalL != MID) {
                     try {
                         video.stopVideo();
-                        video.getStarted("15");
+                        video.getStarted("240" , "360");
                     } catch (IOException e1) {
                         // TODO Auto-generated catch block
                         e1.printStackTrace();
@@ -174,7 +174,7 @@ public class Wifi implements Runnable {
                 if (prevSignalL != LOW) {
                     try {
                         this.video.stopVideo();
-                        this.video.getStarted("5");
+                        this.video.getStarted("120", "180");
                     } catch (IOException e1) {
                         // TODO Auto-generated catch block
                         e1.printStackTrace();
