@@ -577,11 +577,12 @@ public class Server extends JFrame implements ActionListener, Runnable{
 
      public boolean  wifiHandler() {
         sharedArea.checkResult = check_wifi();
+         int checkResult  = sharedArea.checkResult;
 
-        if(prevSignalL == sharedArea.checkResult) {
+        if(prevSignalL == checkResult) {
             return false;
         }
-        switch (sharedArea.checkResult) {
+        switch (checkResult) {
             case DISCON: {
                 // timer.stop();
                 System.out.println("DISCON");
@@ -662,7 +663,7 @@ public class Server extends JFrame implements ActionListener, Runnable{
 //                System.out.println("File list send error : " + e6);
 //            }
 //        }
-        prevSignalL = sharedArea.checkResult; // Saving current wifi state
+        prevSignalL = checkResult; // Saving current wifi state
 
         return true;
     }
