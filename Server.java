@@ -267,8 +267,10 @@ public class Server  implements ActionListener, Runnable{
             else if (request_type == WIFI) {
                 System.out.println("!!!!!!!!!!!!!!!!!!!!!");
                 //if(!sharedArea.wifi_flag) {
-                if(!wifi.wifiHandler()){
+                if(wifi.wifiHandler() == -1){
                     sendChange("300");
+                } else if (wifi.wifiHandler() == 0){
+                    sendChange("500");
                 } else {
                     sendChange("400");
                 }

@@ -120,10 +120,10 @@ public class Wifi implements Runnable {
         return state;
     }
 
-    public boolean  wifiHandler() {
+    public int wifiHandler() {
         checkResult = check_wifi();
         if(prevSignalL == checkResult) {
-            return false;
+            return -1;
         }
         switch (checkResult) {
             case DISCON: {
@@ -192,23 +192,23 @@ public class Wifi implements Runnable {
             }
         }
 
-//        if (isRecon) {
-//            String fileList = "";
-//            for(int i = 0; i < fileIndex; i++) {
-//                fileList += "video_" + (i+1) + ".h264/";
-//            }
-//            System.out.println("fileList : " + fileList + ", fileList.getBytes() : " + fileList.getBytes() + ", fileList.length() : " + fileList.length());
-//            senddp = new DatagramPacket(fileList.getBytes(), fileList.length(), ClientIPAddr, RTP_dest_port);
-//            try {
-//                RTPsocket.send(senddp);
-//                isRecon = false;
-//            } catch(Exception e6) {
-//                System.out.println("File list send error : " + e6);
-//            }
-//        }
+        if (isRecon) {
+            this.downFileList = "";
+            for(int i = 0; i < this.fileIndex; i++) {
+                downFileList += "video_" + (i+1) + ".h264/";
+            }
+            // System.out.println("fileList : " + fileList + ", fileList.getBytes() : " + fileList.getBytes() + ", fileList.length() : " + fileList.length());
+            senddp = new DatagramPacket(this.downFileList.getBytes(), this.downFileList.length(), this.ClientIPAddr, this.RTP_dest_port);
+            try {
+                this.RTPsocket.send(senddp);
+                isRecon = false;
+            } catch(Exception e6) {
+                System.out.println("File list send error : " + e6);
+            }
+        }
         prevSignalL = checkResult; // Saving current wifi state
 
-        return true;
+        return checkResult;
     }
 
 
