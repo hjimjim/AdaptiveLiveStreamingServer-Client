@@ -55,6 +55,8 @@ public class Server  implements ActionListener, Runnable{
     final static int TEARDOWN = 6;
     final static int DESCRIBE = 7;
     final static int WIFI = 8;
+    final static int FILELIST = 9;
+    final static int DOWNLOAD = 10;
 
     static int state; //RTSP Server state == INIT or READY or PLAY
     Socket RTSPsocket; //socket used to send/receive RTSP messages
@@ -237,6 +239,11 @@ public class Server  implements ActionListener, Runnable{
                 System.out.println("222");
                 timer.stop();
                 rtcpReceiver.stopRcv();
+                try {
+                   video.stopVideo();
+                } catch (Exception e5) {
+                   System.out.println("Exception e5");
+                }
 
                 //update state
                 state = READY;
@@ -267,14 +274,19 @@ public class Server  implements ActionListener, Runnable{
             else if (request_type == WIFI) {
                 System.out.println("!!!!!!!!!!!!!!!!!!!!!");
                 //if(!sharedArea.wifi_flag) {
-                if(wifi.wifiHandler() == -1){
+                int option = wifi.wifiHandler();
+                if(option == -1){
                     sendChange("300");
-                } else if (wifi.wifiHandler() == 0){
+                } else if ( option == -5){
                     sendChange("500");
                 } else {
                     sendChange("400");
                 }
                 System.out.println("out!!!!!!!!!!!!!!!!");
+            } else if (request_type == FILELIST) {
+                System.out.println("Give me FileList come on");
+                //Jimin_here 
+                sendFileList("------  file list array =--------- ");
             }
         }
     }
@@ -306,10 +318,14 @@ public class Server  implements ActionListener, Runnable{
             //update current imagenb
             imagenb++;
 
-            try {
+            try{
                 //get next frame to send from the video, as well as its size
                 image_length = video.getnextframe(buf);
-                fos1.write(buf, 0, image_length);
+                if(image_length < 0) {
+                    System.out.println("image_lenght < 0" );
+                    return;
+                }
+                //Jimin: fos1.write(buf, 0, image_length);
                 //adjust quality of the image if there is congestion detected
                 if (congestionLevel > 0) {
                     //Fixme : Jimin
@@ -470,6 +486,8 @@ public class Server  implements ActionListener, Runnable{
                 request_type = DESCRIBE;
             else if ((new String(request_type_string)).compareTo("WIFI") == 0)
                 request_type = WIFI;
+            else if ((new String(request_type_string)).compareTo("FILELIST") == 0)
+                request_type = FILELIST;
 
             if (request_type == SETUP) {
                 //extract VideoFileName from RequestLine
@@ -497,6 +515,10 @@ public class Server  implements ActionListener, Runnable{
             else if (request_type == DESCRIBE) {
                 tokens.nextToken();
                 String describeDataType = tokens.nextToken();
+            }
+            else if (request_type == DOWNLOAD) {
+                tokens.nextToken();
+                System.out.println(tokens.nextToken());
             }
             else {
                 //otherwise LastLine will be the SessionId line
@@ -557,6 +579,21 @@ public class Server  implements ActionListener, Runnable{
             System.exit(0);
         }
     }
+
+
+    private void sendFileList(String file_list) {
+    //Jimin_here
+        try {
+            RTSPBufferedWriter.write("RTSP/1.0 " + "1234" +" OK"+CRLF);
+            RTSPBufferedWriter.write("File List : "+file_list);
+            RTSPBufferedWriter.flush();
+            System.out.println("RTSP Server - Sent Change to Client.");
+        } catch(Exception ex) {
+            System.out.println("Exception caught 4: "+ex);
+            System.exit(0);
+        }
+    }
+
 
     private void sendDescribe() {
         String des = describe();

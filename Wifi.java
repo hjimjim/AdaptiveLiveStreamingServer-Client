@@ -63,6 +63,8 @@ public class Wifi implements Runnable {
                             try{
                                 this.video.stopVideo();
                                 this.video.getStarted("480","720");
+                                checkResult = DISCON;
+                                prevSignalL = checkResult; // Saving current wifi state
                             } catch (Exception e10) {
 
                             }
@@ -122,6 +124,7 @@ public class Wifi implements Runnable {
 
     public int wifiHandler() {
         checkResult = check_wifi();
+        System.out.println("999999999999999999999     "+prevSignalL);
         if(prevSignalL == checkResult) {
             return -1;
         }
@@ -142,8 +145,10 @@ public class Wifi implements Runnable {
             case HIGH: {
                 System.out.println("HIGH");
                 if (prevSignalL == DISCON) {
+                    System.out.println("##################");
                     isRecon = true;
                 }
+                System.out.println("prevSignalL" + prevSignalL);
                 if (prevSignalL != HIGH) {
                     try {
                         video.stopVideo();
@@ -157,8 +162,10 @@ public class Wifi implements Runnable {
             }
             case MID: {
                 if (prevSignalL == DISCON) {
+                    System.out.println("##################");
                     isRecon = true;
                 }
+                System.out.println("prevSignalL" + prevSignalL);
                 System.out.println("MID");
                 if (prevSignalL != MID) {
                     try {
@@ -173,8 +180,10 @@ public class Wifi implements Runnable {
             }
             case LOW: {
                 if (prevSignalL == DISCON) {
+                    System.out.println("##################");
                     isRecon = true;
                 }
+                System.out.println("prevSignalL" + prevSignalL);
                 System.out.println("LOW");
                 if (prevSignalL != LOW) {
                     try {
@@ -193,18 +202,21 @@ public class Wifi implements Runnable {
         }
 
         if (isRecon) {
-            this.downFileList = "";
-            for(int i = 0; i < this.fileIndex; i++) {
-                downFileList += "video_" + (i+1) + ".h264/";
-            }
-            // System.out.println("fileList : " + fileList + ", fileList.getBytes() : " + fileList.getBytes() + ", fileList.length() : " + fileList.length());
-            senddp = new DatagramPacket(this.downFileList.getBytes(), this.downFileList.length(), this.ClientIPAddr, this.RTP_dest_port);
-            try {
-                this.RTPsocket.send(senddp);
-                isRecon = false;
-            } catch(Exception e6) {
-                System.out.println("File list send error : " + e6);
-            }
+//            this.downFileList = "";
+//            for(int i = 0; i < this.fileIndex; i++) {
+//                downFileList += "video_" + (i+1) + ".h264/";
+//            }
+//            // System.out.println("fileList : " + fileList + ", fileList.getBytes() : " + fileList.getBytes() + ", fileList.length() : " + fileList.length());
+//            senddp = new DatagramPacket(this.downFileList.getBytes(), this.downFileList.length(), this.ClientIPAddr, this.RTP_dest_port);
+//            try {
+//                this.RTPsocket.send(senddp);
+//                isRecon = false;
+//            } catch(Exception e6) {
+//                System.out.println("File list send error : " + e6);
+//            }
+              System.out.println("7777777777777777    "+prevSignalL);
+              prevSignalL = checkResult; // Saving current wifi state
+              return -5;
         }
         prevSignalL = checkResult; // Saving current wifi state
 
