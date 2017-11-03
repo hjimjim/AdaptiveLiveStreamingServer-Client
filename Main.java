@@ -8,11 +8,12 @@ public class Main {
         VideoStream videoStream = new VideoStream();
         sharedArea.start_flag = false;
         sharedArea.file_flag = false;
+        sharedArea.filelist = "";
 
 
         Wifi wifi = new Wifi(videoStream, sharedArea);
         Server server = new Server(videoStream, sharedArea, wifi);
-        FileServer fileServer = new FileServer("192.168.0.11", 2222, sharedArea.filelist.split("#"), sharedArea);
+        FileServer fileServer = new FileServer("192.168.0.10", 5522, sharedArea);
 
         Thread server_thread = new Thread(server);
         Thread wifi_thread = new Thread(wifi);
