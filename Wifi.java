@@ -3,6 +3,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Scanner;
+import java.lang.System;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 /**
  * Created by Jimin on 10/30/17.
@@ -73,6 +76,11 @@ public class Wifi implements Runnable {
                         try{
                             byte[] buf = new byte[20000];
                             int image_length = this.video.getnextframe(buf);
+                            long time = System.currentTimeMillis();
+                            SimpleDateFormat date = new SimpleDateFormat("yyyy-mm-dd-hh:mm");
+                            String filename = date.format(new Date(time));
+                            fos2 = new FileOutputStream("./saved/video_"+filename +".h264", true);
+                            
                             fos2.write(buf,0,image_length);
                         } catch (Exception e4) {
                             System.out.println(e4.toString());
@@ -84,7 +92,6 @@ public class Wifi implements Runnable {
             cnt++;
         }
     }
-
     public int check_wifi() {
         //System.out.println("check_wifi");
         byte[] bytes = new byte[1024];
@@ -94,7 +101,7 @@ public class Wifi implements Runnable {
         try {
             Process process = new ProcessBuilder("iwconfig", "wlan0").start();
             InputStream input = process.getInputStream();
-            int n = input.read(bytes, 0, 312); // check iwconfig
+            int n = input.read(bytes, 0, 320); // check iwconfig
             String str = new String(bytes);
             // wifi
             wifi_name = str.substring(29, 35);
@@ -103,7 +110,6 @@ public class Wifi implements Runnable {
             }
             //System.out.println(str.split("Signal level=")[1]);
             //System.out.println(((str.split("Signal level=")[1]).split("  dB"))[0]);
-
             Scanner sc = new Scanner(((str.split("Signal level=")[1]).split("  dB"))[0]);
             signalLevel = sc.nextInt();
             //System.out.println(signalLevel);
@@ -214,9 +220,14 @@ public class Wifi implements Runnable {
 //            } catch(Exception e6) {
 //                System.out.println("File list send error : " + e6);
 //            }
-              System.out.println("7777777777777777    "+prevSignalL);
-              prevSignalL = checkResult; // Saving current wifi state
-              return -5;
+            try {
+                fos2.close();
+            } catch(Exception e5) {
+                System.out.println("error while closing the file " + e5);
+            } 
+            System.out.println("7777777777777777    "+prevSignalL);
+            prevSignalL = checkResult; // Saving current wifi state
+            return -5;
         }
         prevSignalL = checkResult; // Saving current wifi state
 

@@ -57,6 +57,9 @@ public class Server  implements ActionListener, Runnable{
     final static int WIFI = 8;
     final static int FILELIST = 9;
     final static int DOWNLOAD = 10;
+    int fileLenght = 0;
+    int fileIndex = 1;
+    String downFileList = "";
 
     static int state; //RTSP Server state == INIT or READY or PLAY
     Socket RTSPsocket; //socket used to send/receive RTSP messages
@@ -285,8 +288,20 @@ public class Server  implements ActionListener, Runnable{
                 System.out.println("out!!!!!!!!!!!!!!!!");
             } else if (request_type == FILELIST) {
                 System.out.println("Give me FileList come on");
+                String fileList = "";
+                File savedDir = new File("./saved/");
+                if(savedDir.isDirectory()) {
+                    System.out.println("this is dir"); 
+                    for(File file : savedDir.listFiles()) {
+                        if(file.isFile() && (file.getName()).startsWith("video_")) {
+                            fileList += (file.getName() + "#");
+                            System.out.println(fileList);
+                        }
+                    }
+                }
                 //Jimin_here 
-                sendFileList("------  file list array =--------- ");
+                //sendFileList("------  file list array =--------- ");
+                sendFileList(fileList);    
             }
         }
     }
@@ -488,6 +503,8 @@ public class Server  implements ActionListener, Runnable{
                 request_type = WIFI;
             else if ((new String(request_type_string)).compareTo("FILELIST") == 0)
                 request_type = FILELIST;
+            else if ((new String(request_type_string)).compareTo("DOWNLOAD") == 0)
+                request_type = DOWNLOAD;
 
             if (request_type == SETUP) {
                 //extract VideoFileName from RequestLine
@@ -518,7 +535,10 @@ public class Server  implements ActionListener, Runnable{
             }
             else if (request_type == DOWNLOAD) {
                 tokens.nextToken();
-                System.out.println(tokens.nextToken());
+                String filelist = tokens.nextToken();
+                System.out.println("DOWNLOAD FILE LIST: " + filelist);
+                FileServer fServer = new FileServer(ClientIPAddr.getHostAddress(), 2222, filelist.split("#"));
+                fServer.start();
             }
             else {
                 //otherwise LastLine will be the SessionId line
@@ -585,7 +605,7 @@ public class Server  implements ActionListener, Runnable{
     //Jimin_here
         try {
             RTSPBufferedWriter.write("RTSP/1.0 " + "1234" +" OK"+CRLF);
-            RTSPBufferedWriter.write("File List : "+file_list);
+            RTSPBufferedWriter.write("File List: " + file_list + CRLF);
             RTSPBufferedWriter.flush();
             System.out.println("RTSP Server - Sent Change to Client.");
         } catch(Exception ex) {
