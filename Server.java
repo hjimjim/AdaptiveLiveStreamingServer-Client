@@ -537,8 +537,9 @@ public class Server  implements ActionListener, Runnable{
                 tokens.nextToken();
                 String filelist = tokens.nextToken();
                 System.out.println("DOWNLOAD FILE LIST: " + filelist);
-                FileServer fServer = new FileServer(ClientIPAddr.getHostAddress(), 2222, filelist.split("#"));
-                fServer.start();
+                sharedArea.file_flag  = true;
+                //FileServer fServer = new FileServer(ClientIPAddr.getHostAddress(), 2222, filelist.split("#"));
+                //fServer.start();
             }
             else {
                 //otherwise LastLine will be the SessionId line
