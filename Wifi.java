@@ -77,7 +77,7 @@ public class Wifi implements Runnable {
                             byte[] buf = new byte[20000];
                             int image_length = this.video.getnextframe(buf);
                             long time = System.currentTimeMillis();
-                            SimpleDateFormat date = new SimpleDateFormat("yyyy-mm-dd-hh:mm");
+                            SimpleDateFormat date = new SimpleDateFormat("yyyy-MM-dd-hh-mm");
                             String filename = date.format(new Date(time));
                             fos2 = new FileOutputStream("./saved/video_"+filename +".h264", true);
                             

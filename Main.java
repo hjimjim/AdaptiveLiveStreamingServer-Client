@@ -13,7 +13,7 @@ public class Main {
 
         Wifi wifi = new Wifi(videoStream, sharedArea);
         Server server = new Server(videoStream, sharedArea, wifi);
-        FileServer fileServer = new FileServer("192.168.0.10", 5522, sharedArea);
+        FileServer fileServer = new FileServer(5522, sharedArea);
 
         Thread server_thread = new Thread(server);
         Thread wifi_thread = new Thread(wifi);
@@ -29,4 +29,5 @@ class SharedArea {
     String filelist;
     boolean file_flag;
     boolean start_flag;
+    String clientIP;
 }

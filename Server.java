@@ -171,7 +171,7 @@ public class Server  implements ActionListener, Runnable{
 
         //Get Client IP address
         ClientIPAddr = RTSPsocket.getInetAddress();
-
+        sharedArea.clientIP = ClientIPAddr.getHostAddress();
         //Initiate RTSPstate
         state = INIT;
 
