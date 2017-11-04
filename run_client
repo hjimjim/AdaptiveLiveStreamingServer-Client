@@ -1,7 +1,0 @@
-PORT=1052
-HOST=localhost
-FILE=video.Mjpeg
-
-echo "Connecting with server on $HOST port $PORT"
-echo "Streaming $FILE"
-java Client $HOST $PORT $FILE
