@@ -25,9 +25,4 @@ public class Main {
     }
 }
 
-class SharedArea {
-    String filelist;
-    boolean file_flag;
-    boolean start_flag;
-    String clientIP;
-}
+

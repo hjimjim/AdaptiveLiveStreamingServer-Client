@@ -1,4 +1,5 @@
-import java.io.*;
+import java.io.BufferedInputStream;
+import java.io.IOException;
 
 public class VideoStream{
     Process process;

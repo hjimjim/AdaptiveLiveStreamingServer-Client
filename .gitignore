@@ -1,3 +1,15 @@
 *.class
 *.h264
+.DS_Store
+.idea/
+Server/.DS_Store
+Server/.idea/.DS_Store
+Server/.idea/.name
+Server/.idea/compiler.xml
+Server/.idea/copyright/
+Server/.idea/misc.xml
+Server/.idea/modules.xml
+Server/.idea/vcs.xml
+Server/.idea/workspace.xml
+Server/Server.iml
 

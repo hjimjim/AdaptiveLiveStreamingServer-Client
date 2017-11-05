@@ -1,14 +1,11 @@
-/* ------------------
-   Server
-   usage: java Server [RTSP listening port]
----------------------- */
+import javax.swing.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.*;
 import java.net.*;
-import java.awt.*;
-import java.util.*;
-import java.awt.event.*;
-import javax.swing.*;
-import javax.swing.Timer;
+import java.util.StringTokenizer;
+import java.util.UUID;
+
 //extends JFrame
 public class Server  implements ActionListener, Runnable{
 
@@ -145,8 +142,6 @@ public class Server  implements ActionListener, Runnable{
     }
 
 
-
-    @Override
     public void run() {
         //create a Server object
 
