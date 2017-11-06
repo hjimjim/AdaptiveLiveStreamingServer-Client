@@ -275,8 +275,6 @@ public class Server  implements ActionListener, Runnable{
                 sendDescribe();
             }
             else if (request_type == WIFI) {
-                //System.out.println("!!!!!!!!!!!!!!!!!!!!!");
-                //if(!sharedArea.wifi_flag) {
                 int option = wifi.wifiHandler();
                 if(option == -1){
                     sendChange("300");
@@ -608,7 +606,7 @@ public class Server  implements ActionListener, Runnable{
     //Jimin_here
         try {
             RTSPBufferedWriter.write("RTSP/1.0 " + "1234" +" OK"+CRLF);
-            RTSPBufferedWriter.write("File List: " + file_list + CRLF);
+            RTSPBufferedWriter.write(file_list + CRLF);
             RTSPBufferedWriter.flush();
             //System.out.println("RTSP Server - Sent Change to Client.");
         } catch(Exception ex) {

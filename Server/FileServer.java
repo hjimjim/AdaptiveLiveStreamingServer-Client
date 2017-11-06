@@ -10,9 +10,7 @@ public class FileServer implements Runnable {
     private SharedArea sharedArea;
 
     public FileServer(int port, SharedArea sharedArea) {
-        //this.ip = ip;
         this.port = port;
-        //this.fileList = fileList;
         this.sharedArea = sharedArea;
     }
     
@@ -23,26 +21,22 @@ public class FileServer implements Runnable {
             }
             this.fileList =  sharedArea.filelist.split("#");
             try {
-                System.out.println("!!!!!!!!!!!@@@@@@@@@@@@@File Server Started");
                 ip = sharedArea.clientIP;
-                System.out.println(ip);
-                System.out.println(port);
+                //System.out.println(ip);
+                //System.out.println(port);
                 Socket s = new Socket(ip, port);
                 
                 DataOutputStream dos = new DataOutputStream(s.getOutputStream());
-                System.out.println("11111111111111111");
                 File file;
                 FileInputStream fis;
                 byte[] buffer = new byte[4096];
                 for(int i = 0; i < fileList.length; i++) {
-                    System.out.println("filename: " + fileList[i]);
                     file = new File("./saved/" + fileList[i]);
                     if(file.exists()) {
-                        System.out.println(file.length());
+                        //System.out.println(file.length());
                         dos.writeLong(file.length());
                     }
                 }
-                System.out.println("2222222222222222222");
 
                 int read = 0;
                 for(int i = 0; i < fileList.length; i++) {
@@ -54,7 +48,6 @@ public class FileServer implements Runnable {
                     read = 0;
                 }
                 sharedArea.file_flag = false;
-                System.out.println("3333333333333333333");
                 dos.close();
                 s.close();
             } catch(Exception downE) {
