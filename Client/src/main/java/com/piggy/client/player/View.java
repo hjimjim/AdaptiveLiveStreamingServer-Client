@@ -54,8 +54,8 @@ public class View extends JPanel{
         f.setLocation(f_xpos, f_ypos);//占쏙옙占쏙옙占쏙옙占쏙옙 화占썽에 占쏙옙치
         Container con = f.getContentPane();   //占쏙옙占쏙옙占쏙옙占쏙옙 占쏙옙占� 占쏙옙占쏙옙占싱놂옙 占쏙옙占쏙옙
         
-        img = kit.getImage("bg_img3.png");   //占쏙옙占싫�占쏙옙 占쏙옙占쏙옙
-        title_icon = Toolkit.getDefaultToolkit().getImage("icon.png");
+        img = kit.getImage("./img/bg_img3.png");   //占쏙옙占싫�占쏙옙 占쏙옙占쏙옙
+        title_icon = Toolkit.getDefaultToolkit().getImage("./img/icon.png");
         setLayout(null);
         
         displayPanel = new PlayerFrame();
@@ -63,13 +63,13 @@ public class View extends JPanel{
         displayPanel.setLocation(15,45);
         f.add(displayPanel);
         
-        setupButton = new JButton(new ImageIcon("setup_icon.png"));
-        playButton = new JButton(new ImageIcon("play_icon.png"));
-        pauseButton = new JButton(new ImageIcon("pause_icon.png"));
-        exitButton = new JButton(new ImageIcon("stop_icon.png"));
-        saveButton = new JButton(new ImageIcon("save_icon.png"));
-        addButton = new JButton(new ImageIcon("add_button.png"));
-		deleteButton = new JButton(new ImageIcon("delete_button.png"));
+        setupButton = new JButton(new ImageIcon("./img/setup_icon.png"));
+        playButton = new JButton(new ImageIcon("./img/play_icon.png"));
+        pauseButton = new JButton(new ImageIcon("./img/pause_icon.png"));
+        exitButton = new JButton(new ImageIcon("./img/stop_icon.png"));
+        saveButton = new JButton(new ImageIcon("./img/save_icon.png"));
+        addButton = new JButton(new ImageIcon("./img/add_button.png"));
+		deleteButton = new JButton(new ImageIcon("./img/delete_button.png"));
         
         setupButton.setBounds(78,618,60,60);
         playButton.setBounds(225,620,60,60);
