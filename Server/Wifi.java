@@ -44,12 +44,12 @@ public class Wifi implements Runnable {
                 continue;
             }
 
-            if(cnt == 9999999) {//|| check ) {
+            if(cnt == 9999999 || check ) {
                 //if(!check) {
                  //   signal = check_wifi();
                 //}
                 if(check_wifi() == DISCON) {
-                        //if(!check) {
+                        if(!check) {
                             try{
                                 this.video.stopVideo();
                                 this.video.getStarted("480","720");
@@ -58,8 +58,8 @@ public class Wifi implements Runnable {
                             } catch (Exception e10) {
                                 System.out.println("Exception caught10 :"+ e10.toString());
                             }
-                       // }
-                        //check = true;
+                        }
+                        check = true;
                         try{
                             byte[] buf = new byte[20000];
                             int image_length = this.video.getnextframe(buf);
@@ -71,6 +71,8 @@ public class Wifi implements Runnable {
                         } catch (Exception e4) {
                             System.out.println(e4.toString());
                         }
+                } else{
+                    check = false;
                 }
                 cnt=0;
             }
