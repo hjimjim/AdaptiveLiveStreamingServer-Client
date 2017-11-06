@@ -1,4 +1,7 @@
 package com.piggy.client.player;
+import static com.piggy.client.decoder.H264Context.NAL_AUD;
+import static com.piggy.client.decoder.H264Context.NAL_IDR_SLICE;
+import static com.piggy.client.decoder.H264Context.NAL_SLICE;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
@@ -9,16 +12,14 @@ import java.util.Arrays;
 
 import javax.swing.JFrame;
 
-import com.piggy.client.decoder.*;
-import com.piggy.client.util.FrameUtils;
 import com.piggy.client.decoder.AVFrame;
 import com.piggy.client.decoder.AVPacket;
 import com.piggy.client.decoder.H264Decoder;
 import com.piggy.client.decoder.MpegEncContext;
+import com.piggy.client.util.FrameUtils;
 
 public class H264Player implements Runnable {
 	public static final int INBUF_SIZE = 65535;
-	private PlayerFrame displayPanel;
 	private int[] buffer = null;
 	boolean foundFrameStart;
 	static final boolean debug = false;
@@ -35,19 +36,11 @@ public class H264Player implements Runnable {
     AVPacket avpkt;
 
     PipedInputStream bin;
+    View v;
 
-	public H264Player(PipedInputStream pipedInputStream, JFrame frame) {
+	public H264Player(PipedInputStream pipedInputStream, View v) {
         this.bin = pipedInputStream;
-		displayPanel = new PlayerFrame();
-
-		frame.getContentPane().add(displayPanel, BorderLayout.CENTER);
-		// Finish setting up the frame, and show it.
-
-		displayPanel.setVisible(true);
-		frame.pack();
-		frame.setVisible(true);
-		frame.setSize(new Dimension(650, 600));
-
+		this.v = v;
         init();
 	}
 
@@ -113,13 +106,13 @@ public class H264Player implements Runnable {
 	private boolean isEndOfFrame(int code) {
 		int nal = code & 0x1F;
 
-		if (nal == H264Context.NAL_AUD) {
+		if (nal == NAL_AUD) {
 			foundFrameStart = false;
 			return true;
 		}
 
 		boolean foundFrame = foundFrameStart;
-		if (nal == H264Context.NAL_SLICE || nal == H264Context.NAL_IDR_SLICE) {
+		if (nal == NAL_SLICE || nal == NAL_IDR_SLICE) {
 			if (foundFrameStart) {
 				return true;
 			}
@@ -228,10 +221,10 @@ public class H264Player implements Runnable {
                                 buffer = new int[bufferSize];
                             }
                             FrameUtils.YUV2RGB_WOEdge(picture, buffer);
-                            displayPanel.lastFrame = displayPanel.createImage(new MemoryImageSource(imageWidth
+                            v.displayPanel.lastFrame = v.displayPanel.createImage(new MemoryImageSource(imageWidth
                                     , imageHeight, buffer, 0, imageWidth));
-                            displayPanel.invalidate();
-                            displayPanel.updateUI();
+                            v.displayPanel.invalidate();
+                            v.displayPanel.updateUI();
                         }
                         avpkt.size -= len;
                         avpkt.data_offset += len;

@@ -2,22 +2,14 @@
    Client
    usage: java Client [Server hostname] [Server RTSP listening port] [Video file requested]
    ---------------------- */
-
 package com.piggy.client.player;
 import java.awt.event.*;
 import javax.swing.*;
-import java.awt.Color;
-import java.awt.Container;
-import java.awt.Dimension;
-import java.awt.Graphics;
-import java.awt.GridLayout;
-import java.awt.Image;
-import java.awt.List;
-import java.awt.Toolkit;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
+
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.InterruptedIOException;
@@ -32,35 +24,17 @@ import java.text.DecimalFormat;
 import java.util.Random;
 import java.util.StringTokenizer;
 
-
 public class Client extends JPanel implements Runnable {
-    boolean wifi_restart_flag = false;
-    //GUI
-    JFrame f;
-    JButton setupButton;
-    JButton playButton;
-    JButton pauseButton;
-    JButton exitButton;
-    JButton saveButton;
-    JPanel buttonPanel = new JPanel();
-    List left;
-	List right;
-	JButton addButton;
-	JButton deleteButton;
-	JLabel listLabel = new JLabel();
-    JLabel statLabel1 = new JLabel();
-    JLabel statLabel2 = new JLabel();
-    JLabel statLabel3 = new JLabel();
-    Image img,title_icon = null;
 
+    boolean wifi_restart_flag = false;
     //RTP variables:
     //----------------
     DatagramPacket rcvdp;            //UDP packet received from the server
     DatagramSocket RTPsocket;        //socket to be used to send and receive UDP packets
     static int RTP_RCV_PORT = 5004; //port where the client will receive the RTP packets
     
-    //File outputFile = new File("sample.h264");
-    //FileOutputStream fos;
+//    File outputFile = new File("sample.h264");
+//    FileOutputStream fos;
     Timer timer; //timer used to receive data from the UDP socket
     byte[] buf;  //buffer used to store data received from the server 
    
@@ -110,145 +84,23 @@ public class Client extends JPanel implements Runnable {
     int wifi_check_cnt = 0;
     H264Player h264Player;
     boolean reconnect_flag = false;
-
-    String downloadList = "";
+    View v;
 
     SharedArea sharedArea;
-    JScrollPane logPane; //= new JScrollPane(txtLog);
-    JTextArea txtLog;
     //--------------------------
     //Constructor
     //--------------------------
-    public Client(PipedOutputStream pipedOutputStream, JFrame frame, H264Player h264Player, SharedArea sharedArea,JTextArea txtlog ) {
+    public Client(PipedOutputStream pipedOutputStream, View v, H264Player h264Player, SharedArea sharedArea ) {
         //share Thread data
         this.pipedOutputStream = pipedOutputStream;
         this.h264Player  = h264Player;
         this.sharedArea = sharedArea;
-        this.txtLog = txtlog;
-        this.logPane = new JScrollPane(txtlog);
-
-        //build GUI
-        this.f = frame;
-        Toolkit kit = Toolkit.getDefaultToolkit();
-        Dimension screen = Toolkit.getDefaultToolkit().getScreenSize();   //Dimension�� ����� ��ǻ�� ȭ���� ���� �������� Ŭ����
-        f.setPreferredSize(new Dimension(1200, 750));   //������ ũ�� ����
-        int f_xpos = (int)(screen.getWidth() / 2 - 1200 / 2);   //��ũ���� ����, ���� �޾ƿ��� �����
-        int f_ypos = (int)(screen.getHeight() / 2 - 750 / 2);   //��ũ�� ������� â�� ��쵵�� ��
-        f.setLocation(f_xpos, f_ypos);//�������� ȭ�鿡 ��ġ
-        Container con = f.getContentPane();   //�������� ��� �����̳� ����
-        
-        img = kit.getImage("./img/bg_img3.png");   //���ȭ�� ����
-        title_icon = Toolkit.getDefaultToolkit().getImage("./img/icon.png");
-        setLayout(null);
-        
-        setupButton = new JButton(new ImageIcon("./img/setup_icon.png"));
-        playButton = new JButton(new ImageIcon("./img/play_icon.png"));
-        pauseButton = new JButton(new ImageIcon("./img/pause_icon.png"));
-        exitButton = new JButton(new ImageIcon("./img/stop_icon.png"));
-        saveButton = new JButton(new ImageIcon("./img/save_icon.png"));
-        addButton = new JButton(new ImageIcon("./img/add_button.png"));
-		deleteButton = new JButton(new ImageIcon("./img/delete_button.png"));
-        
-        setupButton.setBounds(78,618,60,60);
-        playButton.setBounds(225,620,60,60);
-        pauseButton.setBounds(375,620,60,60 );
-        exitButton.setBounds(525, 620, 60, 60);
-        saveButton.setBounds(1080, 620, 60,60);
-        logPane.setBounds(665, 38, 200, 508);
-
-        setupButton.setBorder(null);
-        playButton.setBorder(null);
-        pauseButton.setBorder(null );
-        exitButton.setBorder(null);
-        saveButton.setBorder(null);
-        
-        add(setupButton);
-        add(playButton);
-        add(pauseButton);
-        add(exitButton);
-        add(saveButton);
-        add(logPane);
-        
-        setupButton.addActionListener(new setupButtonListener());
-        playButton.addActionListener(new playButtonListener());
-        pauseButton.addActionListener(new pauseButtonListener());
-        exitButton.addActionListener(new exitButtonListener());
-        saveButton.addActionListener(new saveButtonListener());
-        
-        //Statistics
-        statLabel1.setText("Total Bytes Received: 0");
-        statLabel2.setText("Packets Lost: 0");
-        statLabel3.setText("Data Rate (bytes/sec): 0");
-        listLabel.setText("[ WIFI OFF FILES ]");
-		
-		buttonPanel.setLayout(new GridLayout(1,0));
-		buttonPanel.add(addButton);
-		buttonPanel.add(deleteButton);
-
-		left = new List(20, true);
-		right = new List(20, true);
-		left.add("ssss");
-
-		int x=879, y=78, w=267, h= 200, bt=50, bl=5;
-		listLabel.setBounds(x+60, y-20, w, 10);
-		left.setBounds(x, y, w, h);
-		buttonPanel.setBounds(x,y+h+bl,w,bt);
-		right.setBounds(x, y+h+bt+bl+bl, w, h);
-		
-		add(listLabel);
-		add(left);
-		add(buttonPanel);
-		add(right);
-		
-        f.add(this);
-        f.add(statLabel1);
-        f.add(statLabel2);
-        f.add(statLabel3);
-        
-        statLabel1.setBounds(800,615,380,20);
-        statLabel2.setBounds(800,635, 380, 20);
-        statLabel3.setBounds(800,655, 380, 20);
-       
-        statLabel1.setForeground(Color.WHITE);
-        statLabel2.setForeground(Color.WHITE);
-        statLabel3.setForeground(Color.WHITE);
-        
-        addButton.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                // TODO Auto-generated method stub
-                String[] selectItems = left.getSelectedItems();
-                for(int i = 0; i < selectItems.length;i++) {
-                    right.add(selectItems[i]);
-                }
-                int[] selectIndexes = left.getSelectedIndexes();
-                for(int i=0;i<selectIndexes.length;i++) {
-                    left.remove(selectIndexes[selectIndexes.length-i-1]);
-                }
-            }
-        });
-        deleteButton.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                String[] selectItems = right.getSelectedItems();
-                for(int i=0;i<selectItems.length;i++) {
-                    left.add(selectItems[i]);
-                }
-                int[] selectIndexes = right.getSelectedIndexes();
-                for(int i=0;i<selectIndexes.length;i++) {
-                    right.remove(selectIndexes[selectIndexes.length-i-1]);
-                }
-            }
-        });
-
-        f.setIconImage(title_icon);
-        con.add(this);
-        f.pack();
-        f.addWindowListener(new WindowAdapter() {
-            public void windowClosing(WindowEvent e) {
-                System.exit(0);
-            }
-        });
-        f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);   //�ݱ�â
-        f.setVisible(true);
+        this.v = v;
+        v.setupButton.addActionListener(new setupButtonListener());
+        v.playButton.addActionListener(new playButtonListener());
+        v.pauseButton.addActionListener(new pauseButtonListener());
+        v.exitButton.addActionListener(new exitButtonListener());
+        v.saveButton.addActionListener(new saveButtonListener());
 
         //init timer
         timer = new Timer(50, new timerListener());
@@ -262,10 +114,7 @@ public class Client extends JPanel implements Runnable {
         buf = new byte[25000];    
 
     }
-    protected void paintComponent(Graphics g){   //�׷��Ⱥ��� g�� �̹����ְ� �׸���
-        g.drawImage(img, 0, 0, 1185, 710, f);    
-     } 
-
+    
     public void run() {
         //Run Client Thread
         try {
@@ -289,11 +138,6 @@ public class Client extends JPanel implements Runnable {
             System.out.println(e.toString());
         }
     }
-
-    private void addLog(String log) {
-        txtLog.append(log + "\n");
-        txtLog.setCaretPosition(txtLog.getDocument().getLength());
-    }
     //------------------------------------
     //Handler for buttons
     //------------------------------------
@@ -301,7 +145,7 @@ public class Client extends JPanel implements Runnable {
     class setupButtonListener implements ActionListener {
 
         public void actionPerformed(ActionEvent e){
-            System.out.println("Setup Button pressed !");
+        	System.out.println("Setup Button pressed !");
             if (state == INIT) {
                 //Init non-blocking RTPsocket that will be used to receive data
                 try {
@@ -329,39 +173,37 @@ public class Client extends JPanel implements Runnable {
                     state = READY;
                     System.out.println("New RTSP state: READY");
                 }
-                addLog("Client succeeded connecting to server ");
             }
             //else if state != INIT then do nothing
         }
     }
     class saveButtonListener implements ActionListener{
     	public void actionPerformed(ActionEvent e) {
-    		String[] selectItems = right.getItems();
-            for(int i=0;i<selectItems.length;i++) {
-                downloadList+=selectItems[i]+"#";
-            }
-            System.out.println("download list : "+downloadList);
-            System.out.println("Sending DOWNLOAD request");
+    		 String[] selectItems = v.right.getItems();
+             for(int i=0;i<selectItems.length;i++) {
+                 v.downloadList+=selectItems[i]+"#";
+                 v.left.add(selectItems[i]);
+             }
+             v.right.removeAll();
+             System.out.println("download list : "+v.downloadList);
+             System.out.println("Sending DOWNLOAD request");
+             //increase RTSP sequence number
+             RTSPSeqNb++;
 
-            //increase RTSP sequence number
-            RTSPSeqNb++;
-
-            //Send DESCRIBE message to the server
-            sharedArea.downloadList = downloadList;
-            sharedArea.file_flag = true;
-            sendRequest("DOWNLOAD");
-            addLog("Client sent download request to Server");
-            //FileDownloader fileDown = new FileDownloader(5522, downloadList.split("#"));
-            //fileDown.start();
-            System.out.println("Thread started!!!!!!!!!!!!!");
-
-            //Wait for the response
-            if (parseServerResponse() != 200) {
-                System.out.println("Invalid Server Response");
-            }
-            else {
-                System.out.println("Receiving file data from server");
-            }
+             //Send DESCRIBE message to the server
+             sharedArea.downloadList = v.downloadList;
+             sharedArea.file_flag = true;
+             sendRequest("DOWNLOAD");
+             v.addLog("Client sent download request to Server");
+             System.out.println("Thread started!!!!!!!!!!!!!");
+             
+             //Wait for the response
+             if (parseServerResponse() != 200) {
+                 System.out.println("Invalid Server Response");
+             }
+             else {
+                 System.out.println("Receiving file data from server");
+             }
     	}
     }
     //Handler for Play button
@@ -378,22 +220,19 @@ public class Client extends JPanel implements Runnable {
                 //Wait for the response 
                 if (parseServerResponse() != 200) {
                     System.out.println("Invalid Server Response");
-                    addLog("Error : failed playing video");
-                } else {
+                    v.addLog("Error : failed playing video");
+                }
+                else {
                     //change RTSP state and print out new state
                     state = PLAYING;
                     System.out.println("New RTSP state: PLAYING");
                     //Fixme:// this part is not necessary it is only for test
                     //don't need to save file
-//                    try {
-//                        fos = new FileOutputStream(outputFile, true);
-//                    } catch(Exception fosE) {
-//                        fosE.printStackTrace();
-//                    }
                     //start the timer
                     timer.start();
                     rtcpSender.startSend();
-                    addLog("Client started playing live video");
+                    v.addLog("Client started playing live video");
+
                 }
             }
             //else if state != READY then do nothing
@@ -412,8 +251,10 @@ public class Client extends JPanel implements Runnable {
                 //Wait for the response 
                 if (parseServerResponse() != 200) {
                     System.out.println("Invalid Server Response");
-                    addLog("Error : couldn't stop video");
-                } else {
+                	v.addLog("Error : couldn't stop video");
+                }
+                else 
+                {
                     //change RTSP state and print out new state
                     state = READY;
                     System.out.println("New RTSP state: READY");
@@ -427,21 +268,16 @@ public class Client extends JPanel implements Runnable {
                         System.out.println(e1.toString());
                     }
                     h264Player.replay();
-                    addLog("Video paused");
+                    v.addLog("Video paused");
+
                 }
                 //Fixme:// need to change, we don't need file anymore
                 //Fixme:// need to stop h264Player too.
-//                try {
-//                    fos.close();
-//                    //h264Player.stop();
-//                } catch (Exception e1) {
-//                    System.out.println(e1.toString());
-//                }
             }
             //else if state != PLAYING then do nothing
         }
     }
-    //Handler for Teardown button
+    //Handler for exitdown button
     //-----------------------
     class exitButtonListener implements ActionListener {
 
@@ -449,13 +285,13 @@ public class Client extends JPanel implements Runnable {
             //increase RTSP sequence number
             RTSPSeqNb++;
 
-            //Send TEARDOWN message to the server
+            //Send exitDOWN message to the server
             sendRequest("TEARDOWN");
 
-            //Wait for the response
-            if (parseServerResponse() != 200) {
+            //Wait for the response 
+            if (parseServerResponse() != 200)
                 System.out.println("Invalid Server Response");
-            } else {
+            else {     
                 //change RTSP state and print out new state
                 state = INIT;
                 System.out.println("New RTSP state: INIT");
@@ -529,7 +365,6 @@ public class Client extends JPanel implements Runnable {
 
                     if (wifi_check_cnt == 20) {
                         sendRequest("WIFI");
-                        System.out.println("%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%");
                         int option = parseServerResponse();
                         if (option == 400) {
                             System.out.println("New RTSP state: WIFI CHANGED");
@@ -539,7 +374,6 @@ public class Client extends JPanel implements Runnable {
                                 System.out.println("Exception Jimin 3 " + e1.toString());
                             }
                             wifi_restart_flag = true;
-                            //h264Player.replay();
                         } else if (option == 300) {
                             System.out.println("New RTSP state: WIFI NOT CHANGED");
                         } else if(option == 500) {
@@ -552,23 +386,15 @@ public class Client extends JPanel implements Runnable {
                         wifi_check_cnt = 0;
                     }
                     wifi_check_cnt++;
-
-
-
-
                     try {
                         pipedOutputStream.write(payload);
                     } catch (IOException e1) {
                         System.out.println("Exception caught Jimin 2" + e1.toString());
                     }
-
-
                     if(wifi_restart_flag) {
                         h264Player.replay();
                         wifi_restart_flag = false;
                     }
-
-                    //fos.write(payload,0,payload_length);
                     //compute stats and update the label in GUI
                     statExpRtpNb++;
                     if (seqNb > statHighSeqNb) {
@@ -699,7 +525,7 @@ public class Client extends JPanel implements Runnable {
                 System.out.println("!!!!!!!!Filelist: " + fileList);
                 for(String str : fileList.split("#")) {
                     if(str.length() > 0) {
-                        left.add(str);
+                        v.left.add(str);
                     }
                 }
             }
@@ -713,11 +539,10 @@ public class Client extends JPanel implements Runnable {
 
     private void updateStatsLabel() {
         DecimalFormat formatter = new DecimalFormat("###,###.##");
-        statLabel1.setText("Total Bytes Received: " + statTotalBytes);
-        statLabel2.setText("Packet Lost Rate: " + formatter.format(statFractionLost));
-        statLabel3.setText("Data Rate: " + formatter.format(statDataRate) + " bytes/s");
+        v.statLabel1.setText("Total Bytes Received: " + statTotalBytes);
+        v.statLabel2.setText("Packet Lost Rate: " + formatter.format(statFractionLost));
+        v.statLabel3.setText("Data Rate: " + formatter.format(statDataRate) + " bytes/s");
     }
-
     //------------------------------------
     //Send RTSP Request
     //------------------------------------
@@ -741,7 +566,7 @@ public class Client extends JPanel implements Runnable {
                 RTSPBufferedWriter.write("Check: WIFI" + CRLF);
             }
             else if (request_type == "DOWNLOAD") {
-                RTSPBufferedWriter.write("DOWNLOAD: " + downloadList + CRLF); //#########
+                RTSPBufferedWriter.write("DOWNLOAD: " + v.downloadList + CRLF); //#########
             }
             else {
                 //otherwise, write the Session line from the RTSPid field

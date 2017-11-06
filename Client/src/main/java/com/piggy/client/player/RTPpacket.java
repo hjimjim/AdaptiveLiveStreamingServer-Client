@@ -1,5 +1,4 @@
-package com.piggy.client.player;//class RTPpacket
-
+package com.piggy.client.player;
 import java.util.Arrays;
 
 public class RTPpacket{
