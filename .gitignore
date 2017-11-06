@@ -2,6 +2,9 @@
 Client/.idea/*
 Server/.idea/*
 
+Client/*.class
+Server/*.class
+
 Server/.DS_Store
 Client/.DS_Store
 

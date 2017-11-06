@@ -136,7 +136,7 @@ public class Server  implements ActionListener, Runnable{
             fos1 = new FileOutputStream(outputFile,true);
             fos2 = new FileOutputStream(saveFile,true);
         } catch(Exception e) {
-            System.out.println("e");
+            //System.out.println("e");
         }
 
         this.video = videoStream;
@@ -239,13 +239,13 @@ public class Server  implements ActionListener, Runnable{
                 sendResponse();
                 //stop timer
 
-                System.out.println("222");
+                //System.out.println("222");
                 timer.stop();
                 rtcpReceiver.stopRcv();
                 try {
                    video.stopVideo();
                 } catch (Exception e5) {
-                   System.out.println("Exception e5");
+                   System.out.println("Exception e5: " + e5.toString());
                 }
 
                 //update state
@@ -275,7 +275,7 @@ public class Server  implements ActionListener, Runnable{
                 sendDescribe();
             }
             else if (request_type == WIFI) {
-                System.out.println("!!!!!!!!!!!!!!!!!!!!!");
+                //System.out.println("!!!!!!!!!!!!!!!!!!!!!");
                 //if(!sharedArea.wifi_flag) {
                 int option = wifi.wifiHandler();
                 if(option == -1){
@@ -285,13 +285,13 @@ public class Server  implements ActionListener, Runnable{
                 } else {
                     sendChange("400");
                 }
-                System.out.println("out!!!!!!!!!!!!!!!!");
+                //System.out.println("out!!!!!!!!!!!!!!!!");
             } else if (request_type == FILELIST) {
-                System.out.println("Give me FileList come on");
+                //System.out.println("Give me FileList come on");
                 String fileList = "";
                 File savedDir = new File("./saved/");
                 if(savedDir.isDirectory()) {
-                    System.out.println("this is dir"); 
+                    //System.out.println("this is dir"); 
                     for(File file : savedDir.listFiles()) {
                         if(file.isFile() && (file.getName()).startsWith("video_")) {
                             fileList += (file.getName() + "#");
@@ -337,7 +337,7 @@ public class Server  implements ActionListener, Runnable{
                 //get next frame to send from the video, as well as its size
                 image_length = video.getnextframe(buf);
                 if(image_length < 0) {
-                    System.out.println("image_lenght < 0" );
+                    //System.out.println("image_lenght < 0" );
                     return;
                 }
                 //Jimin: fos1.write(buf, 0, image_length);
@@ -364,14 +364,14 @@ public class Server  implements ActionListener, Runnable{
 
                 RTPsocket.send(senddp);
 
-                System.out.println("Send frame #" + imagenb + ", Frame size: " + image_length + " (" + buf.length + ")");
+                //System.out.println("Send frame #" + imagenb + ", Frame size: " + image_length + " (" + buf.length + ")");
                 //print the header bitstream
-                rtp_packet.printheader();
+                //Jimin rtp_packet.printheader();
 
                 //Jimin_GUI: update GUI
                 //label.setText("Send frame #" + imagenb);
             } catch (Exception ex) {
-                System.out.println("Exception caught5: " + ex);
+                System.out.println("Exception caught5: " + ex.toString());
                 //System.exit(0);
             }
         } else {
@@ -435,7 +435,7 @@ public class Server  implements ActionListener, Runnable{
                 //RTCPsocket.setSoTimeout(3000);
                 RTCPsocket.receive(dp);   // Blocking
                 RTCPpacket rtcpPkt = new RTCPpacket(dp.getData(), dp.getLength());
-                System.out.println("Jimin Jimin [RTCP] " + rtcpPkt);
+                //System.out.println("Jimin Jimin [RTCP] " + rtcpPkt);
 
                 //set congestion level between 0 to 4
                 fractionLost = rtcpPkt.fractionLost;
@@ -468,7 +468,7 @@ public class Server  implements ActionListener, Runnable{
         }
 
         public void stopRcv() {
-            System.out.println("5555");
+            //System.out.println("5555");
             rtcpTimer.stop();
         }
     }
@@ -482,8 +482,8 @@ public class Server  implements ActionListener, Runnable{
         try {
             //parse request line and extract the request_type:
             String RequestLine = RTSPBufferedReader.readLine();
-            System.out.println("RTSP Server - Received from Client:");
-            System.out.println(RequestLine);
+            //System.out.println("RTSP Server - Received from Client:");
+            //System.out.println(RequestLine);
 
             StringTokenizer tokens = new StringTokenizer(RequestLine);
             String request_type_string = tokens.nextToken();
@@ -513,14 +513,14 @@ public class Server  implements ActionListener, Runnable{
 
             //parse the SeqNumLine and extract CSeq field
             String SeqNumLine = RTSPBufferedReader.readLine();
-            System.out.println(SeqNumLine);
+            //System.out.println(SeqNumLine);
             tokens = new StringTokenizer(SeqNumLine);
             tokens.nextToken();
             RTSPSeqNb = Integer.parseInt(tokens.nextToken());
 
             //get LastLine
             String LastLine = RTSPBufferedReader.readLine();
-            System.out.println(LastLine);
+            //System.out.println(LastLine);
 
             tokens = new StringTokenizer(LastLine);
             if (request_type == SETUP) {
@@ -549,7 +549,7 @@ public class Server  implements ActionListener, Runnable{
                 RTSPid = tokens.nextToken();
             }
         } catch(Exception ex) {
-            System.out.println("Exception caught2: "+ex);
+            System.out.println("Exception caught2: "+ex.toString());
             System.exit(0);
         }
 
@@ -585,9 +585,9 @@ public class Server  implements ActionListener, Runnable{
             RTSPBufferedWriter.write("CSeq: "+RTSPSeqNb+CRLF);
             RTSPBufferedWriter.write("Session: "+RTSPid+CRLF);
             RTSPBufferedWriter.flush();
-            System.out.println("RTSP Server - Sent response to Client.");
+            //System.out.println("RTSP Server - Sent response to Client.");
         } catch(Exception ex) {
-            System.out.println("Exception caught3: "+ex);
+            System.out.println("Exception caught3: "+ex.toString());
             System.exit(0);
         }
     }
@@ -596,9 +596,9 @@ public class Server  implements ActionListener, Runnable{
         try {
             RTSPBufferedWriter.write("RTSP/1.0 " + str +" OK"+CRLF);
             RTSPBufferedWriter.flush();
-            System.out.println("RTSP Server - Sent Change to Client.");
+            //System.out.println("RTSP Server - Sent Change to Client.");
         } catch(Exception ex) {
-            System.out.println("Exception caught3: "+ex);
+            System.out.println("Exception caught3: "+ex.toString());
             System.exit(0);
         }
     }
@@ -610,9 +610,9 @@ public class Server  implements ActionListener, Runnable{
             RTSPBufferedWriter.write("RTSP/1.0 " + "1234" +" OK"+CRLF);
             RTSPBufferedWriter.write("File List: " + file_list + CRLF);
             RTSPBufferedWriter.flush();
-            System.out.println("RTSP Server - Sent Change to Client.");
+            //System.out.println("RTSP Server - Sent Change to Client.");
         } catch(Exception ex) {
-            System.out.println("Exception caught 4: "+ex);
+            System.out.println("Exception caught 4: "+ex.toString());
             System.exit(0);
         }
     }
@@ -625,9 +625,9 @@ public class Server  implements ActionListener, Runnable{
             RTSPBufferedWriter.write("CSeq: "+RTSPSeqNb+CRLF);
             RTSPBufferedWriter.write(des);
             RTSPBufferedWriter.flush();
-            System.out.println("RTSP Server - Sent response to Client.");
+            //System.out.println("RTSP Server - Sent response to Client.");
         } catch(Exception ex) {
-            System.out.println("Exception caught4: "+ex);
+            System.out.println("Exception caught4: "+ex.toString());
             System.exit(0);
         }
     }
