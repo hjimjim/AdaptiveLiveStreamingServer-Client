@@ -233,6 +233,10 @@ public class Server  implements ActionListener, Runnable{
     public void actionPerformed(ActionEvent e) {
         int image_length = 0 ;
 
+        if(sharedArea.disconnect_flag) {
+            return;
+        }
+
         //if the current image nb is less than the length of the video
         if (imagenb < VIDEO_LENGTH) {
             //update current imagenb
@@ -252,6 +256,10 @@ public class Server  implements ActionListener, Runnable{
 
                 //get to total length of the full rtp packet to send
                 int packet_length = rtp_packet.getlength();
+                
+                if(packet_length <= 0) {
+                    return;
+                }
 
                 //retrieve the packet bitstream and store it in an array of bytes
                 byte[] packet_bits = new byte[packet_length];

@@ -27,6 +27,7 @@ public class Wifi implements Runnable {
     VideoStream video = null;
     SharedArea sharedArea = null;
     FileOutputStream fos2 = null;
+    long time=0;
 
     public Wifi(VideoStream videoStream, SharedArea sharedArea) {
         this.video = videoStream;
@@ -45,12 +46,10 @@ public class Wifi implements Runnable {
             }
 
             if(cnt == 9999999 || check ) {
-                //if(!check) {
-                 //   signal = check_wifi();
-                //}
                 if(check_wifi() == DISCON) {
                         if(!check) {
-                            try{
+                            time = System.currentTimeMillis();
+                            try {
                                 this.video.stopVideo();
                                 this.video.getStarted("480","720");
                                 checkResult = DISCON;
@@ -58,12 +57,12 @@ public class Wifi implements Runnable {
                             } catch (Exception e10) {
                                 System.out.println("Exception caught10 :"+ e10.toString());
                             }
+                            sharedArea.disconnect_flag = true;
                         }
                         check = true;
                         try{
                             byte[] buf = new byte[20000];
                             int image_length = this.video.getnextframe(buf);
-                            long time = System.currentTimeMillis();
                             SimpleDateFormat date = new SimpleDateFormat("yyyy-MM-dd-hh-mm");
                             String filename = date.format(new Date(time));
                             fos2 = new FileOutputStream("./saved/video_"+filename +".h264", true);
@@ -71,7 +70,8 @@ public class Wifi implements Runnable {
                         } catch (Exception e4) {
                             System.out.println(e4.toString());
                         }
-                } else{
+                } else {
+                    sharedArea.disconnect_flag = false;
                     check = false;
                 }
                 cnt=0;
@@ -97,11 +97,11 @@ public class Wifi implements Runnable {
             }
             Scanner sc = new Scanner(((str.split("Signal level=")[1]).split("  dB"))[0]);
             signalLevel = sc.nextInt();
-            if (signalLevel >= -35) {
+            if (signalLevel >= -60) {
                 return HIGH;
-            } else if (signalLevel < -35 && signalLevel >= -45) {
+            } else if (signalLevel < -60 && signalLevel >= -65) {
                 return MID;
-            } else if (signalLevel < -45) {
+            } else if (signalLevel < -65) {
                 return LOW;
             }
             process.destroy();

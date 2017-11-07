@@ -9,6 +9,7 @@ public class Main {
         sharedArea.start_flag = false;
         sharedArea.file_flag = false;
         sharedArea.filelist = "";
+        sharedArea.disconnect_flag = false;
 
 
         Wifi wifi = new Wifi(videoStream, sharedArea);
@@ -29,5 +30,6 @@ class SharedArea {
     String filelist;
     boolean file_flag;
     boolean start_flag;
+    boolean disconnect_flag;
     String clientIP;
 }
