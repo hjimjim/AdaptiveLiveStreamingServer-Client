@@ -97,9 +97,9 @@ public class Wifi implements Runnable {
             }
             Scanner sc = new Scanner(((str.split("Signal level=")[1]).split("  dB"))[0]);
             signalLevel = sc.nextInt();
-            if (signalLevel >= -60) {
+            if (signalLevel >= -50) {
                 return HIGH;
-            } else if (signalLevel < -60 && signalLevel >= -65) {
+            } else if (signalLevel < -50 && signalLevel >= -65) {
                 return MID;
             } else if (signalLevel < -65) {
                 return LOW;
@@ -191,6 +191,7 @@ public class Wifi implements Runnable {
                 System.out.println("error while closing the file " + e5);
             } 
             prevSignalL = checkResult; // Saving current wifi state
+            isRecon = false;
             return -5;
         }
         prevSignalL = checkResult; // Saving current wifi state
