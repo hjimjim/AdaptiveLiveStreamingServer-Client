@@ -2,7 +2,6 @@ package com.piggy.client.player;
 
 import javax.swing.*;
 import java.io.IOException;
-import java.awt.FlowLayout;
 import java.io.DataInputStream;
 import java.io.FileOutputStream;
 import java.io.File;

@@ -8,11 +8,8 @@ import javax.swing.*;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.InterruptedIOException;
 import java.io.OutputStreamWriter;
 import java.io.PipedOutputStream;
 import java.net.DatagramPacket;
@@ -21,7 +18,6 @@ import java.net.InetAddress;
 import java.net.Socket;
 import java.net.SocketException;
 import java.text.DecimalFormat;
-import java.util.Random;
 import java.util.StringTokenizer;
 
 public class Client extends JPanel implements Runnable {
@@ -35,7 +31,7 @@ public class Client extends JPanel implements Runnable {
     
 //    File outputFile = new File("sample.h264");
 //    FileOutputStream fos;
-    Timer timer; //timer used to receive data from the UDP socket
+    Timer timer; //timer used to./img/ receive data from the UDP socket
     byte[] buf;  //buffer used to store data received from the server 
    
     //RTSP variables
@@ -61,9 +57,6 @@ public class Client extends JPanel implements Runnable {
     //RTCP variables
     //----------------
     DatagramSocket RTCPsocket;          //UDP socket for sending RTCP packets
-    static int RTCP_RCV_PORT = 19001;   //port where the client will receive the RTP packets
-    static int RTCP_PERIOD = 400;       //How often to send RTCP packets
-    RtcpSender rtcpSender;
 
     //Video constants:
     //------------------
@@ -84,31 +77,28 @@ public class Client extends JPanel implements Runnable {
     int wifi_check_cnt = 0;
     H264Player h264Player;
     boolean reconnect_flag = false;
-    View v;
+    View view;
 
     SharedArea sharedArea;
     //--------------------------
     //Constructor
     //--------------------------
-    public Client(PipedOutputStream pipedOutputStream, View v, H264Player h264Player, SharedArea sharedArea ) {
+    public Client(PipedOutputStream pipedOutputStream, View view, H264Player h264Player, SharedArea sharedArea ) {
         //share Thread data
         this.pipedOutputStream = pipedOutputStream;
         this.h264Player  = h264Player;
         this.sharedArea = sharedArea;
-        this.v = v;
-        v.setupButton.addActionListener(new setupButtonListener());
-        v.playButton.addActionListener(new playButtonListener());
-        v.pauseButton.addActionListener(new pauseButtonListener());
-        v.exitButton.addActionListener(new exitButtonListener());
-        v.saveButton.addActionListener(new saveButtonListener());
+        this.view = view;
+        view.setupButton.addActionListener(new setupButtonListener());
+        view.playButton.addActionListener(new playButtonListener());
+        view.pauseButton.addActionListener(new pauseButtonListener());
+        view.exitButton.addActionListener(new exitButtonListener());
+        view.saveButton.addActionListener(new saveButtonListener());
 
         //init timer
         timer = new Timer(50, new timerListener());
         timer.setInitialDelay(0);
         timer.setCoalesce(true);
-
-        //init RTCP packet sender
-        rtcpSender = new RtcpSender(400);
 
         //allocate enough memory for the buffer used to receive data from the server
         buf = new byte[25000];    
@@ -179,24 +169,23 @@ public class Client extends JPanel implements Runnable {
     }
     class saveButtonListener implements ActionListener{
     	public void actionPerformed(ActionEvent e) {
-    		 String[] selectItems = v.right.getItems();
+    		 String[] selectItems = view.right.getItems();
              for(int i=0;i<selectItems.length;i++) {
-                 v.downloadList+=selectItems[i]+"#";
-                 v.left.add(selectItems[i]);
+                 view.downloadList+=selectItems[i]+"#";
+                 view.left.add(selectItems[i]);
              }
-             v.right.removeAll();
-             System.out.println("download list : "+v.downloadList);
+             view.right.removeAll();
+             System.out.println("download list : "+ view.downloadList);
              System.out.println("Sending DOWNLOAD request");
              //increase RTSP sequence number
              RTSPSeqNb++;
 
              //Send DESCRIBE message to the server
-             sharedArea.downloadList = v.downloadList;
+             sharedArea.downloadList = view.downloadList;
              sharedArea.file_flag = true;
              sendRequest("DOWNLOAD");
-             v.addLog("Client sent download request to Server");
-             System.out.println("Thread started!!!!!!!!!!!!!");
-             
+             view.addLog("Client sent download request to Server");
+
              //Wait for the response
              if (parseServerResponse() != 200) {
                  System.out.println("Invalid Server Response");
@@ -220,7 +209,7 @@ public class Client extends JPanel implements Runnable {
                 //Wait for the response 
                 if (parseServerResponse() != 200) {
                     System.out.println("Invalid Server Response");
-                    v.addLog("Error : failed playing video");
+                    view.addLog("Error : failed playing video");
                 }
                 else {
                     //change RTSP state and print out new state
@@ -230,8 +219,7 @@ public class Client extends JPanel implements Runnable {
                     //don't need to save file
                     //start the timer
                     timer.start();
-                    rtcpSender.startSend();
-                    v.addLog("Client started playing live video");
+                    view.addLog("Client started playing live video");
 
                 }
             }
@@ -251,7 +239,7 @@ public class Client extends JPanel implements Runnable {
                 //Wait for the response 
                 if (parseServerResponse() != 200) {
                     System.out.println("Invalid Server Response");
-                	v.addLog("Error : couldn't stop video");
+                	view.addLog("Error : couldn't stop video");
                 }
                 else 
                 {
@@ -261,14 +249,13 @@ public class Client extends JPanel implements Runnable {
                       
                     //stop the timer
                     timer.stop();
-                    rtcpSender.stopSend();
                     try {
                         pipedOutputStream.flush();
                     } catch (Exception e1) {
                         System.out.println(e1.toString());
                     }
                     h264Player.replay();
-                    v.addLog("Video paused");
+                    view.addLog("Video paused");
 
                 }
                 //Fixme:// need to change, we don't need file anymore
@@ -297,8 +284,6 @@ public class Client extends JPanel implements Runnable {
                 System.out.println("New RTSP state: INIT");
                 //stop the timer
                 timer.stop();
-                rtcpSender.stopSend();
-
                 //exit
                 System.exit(0);
             }
@@ -329,11 +314,10 @@ public class Client extends JPanel implements Runnable {
                     int option = parseServerResponse();
                     System.out.println(option);
                     if (option == 1234) {
-                        // Jimin_Here
-                        System.out.println("FileLIST COMEON!!!!!!!!!!!!");
+                        view.addLog("requested file list");
                     }
                     else {
-                        System.out.println("Invalid Server Response");
+                        view.addLog("Error: Invalid Server Response");
                     }
                 }
 
@@ -361,7 +345,6 @@ public class Client extends JPanel implements Runnable {
 
                     byte[] payload = new byte[payload_length];
                     rtp_packet.getpayload(payload);
-
 
                     if (wifi_check_cnt == 20) {
                         sendRequest("WIFI");
@@ -415,68 +398,6 @@ public class Client extends JPanel implements Runnable {
             }
         }
     }
-    //------------------------------------
-    // Send RTCP control packets for QoS feedback
-    //------------------------------------
-    class RtcpSender implements ActionListener {
-
-        private Timer rtcpTimer;
-        int interval;
-        // Stats variables
-        private int numPktsExpected;    // Number of RTP packets expected since the last RTCP packet
-        private int numPktsLost;        // Number of RTP packets lost since the last RTCP packet
-        private int lastHighSeqNb;      // The last highest Seq number received
-        private int lastCumLost;        // The last cumulative packets lost
-        private float lastFractionLost; // The last fraction lost
-        Random randomGenerator;         // For testing only
-
-        public RtcpSender(int interval) {
-            this.interval = interval;
-            rtcpTimer = new Timer(interval, this);
-            rtcpTimer.setInitialDelay(0);
-            rtcpTimer.setCoalesce(true);
-            randomGenerator = new Random();
-        }
-        public void run() {
-            System.out.println("RtcpSender Thread Running");
-        }
-        public void actionPerformed(ActionEvent e) {
-
-            // Calculate the stats for this period
-            numPktsExpected = statHighSeqNb - lastHighSeqNb;
-            numPktsLost = statCumLost - lastCumLost;
-            lastFractionLost = numPktsExpected == 0 ? 0f : (float)numPktsLost / numPktsExpected;
-            lastHighSeqNb = statHighSeqNb;
-            lastCumLost = statCumLost;
-
-            //To test lost feedback on lost packets
-            // lastFractionLost = randomGenerator.nextInt(10)/10.0f;
-
-            RTCPpacket rtcp_packet = new RTCPpacket(lastFractionLost, statCumLost, statHighSeqNb);
-            int packet_length = rtcp_packet.getlength();
-            byte[] packet_bits = new byte[packet_length];
-            rtcp_packet.getpacket(packet_bits);
-
-            try {
-                DatagramPacket dp = new DatagramPacket(packet_bits, packet_length, ServerIPAddr, RTCP_RCV_PORT);
-                RTCPsocket.send(dp);
-            } catch (InterruptedIOException iioe) {
-                System.out.println("1 Nothing to read");
-            } catch (IOException ioe) {
-                System.out.println("Exception caught: "+ioe);
-            }
-        }
-
-        // Start sending RTCP packets
-        public void startSend() {
-            rtcpTimer.start();
-        }
-
-        // Stop sending RTCP packets
-        public void stopSend() {
-            rtcpTimer.stop();
-        }
-    }
 
     //------------------------------------
     //Synchronize frames
@@ -525,7 +446,7 @@ public class Client extends JPanel implements Runnable {
                 System.out.println("!!!!!!!!Filelist: " + fileList);
                 for(String str : fileList.split("#")) {
                     if(str.length() > 0) {
-                        v.left.add(str);
+                        view.left.add(str);
                     }
                 }
             }
@@ -539,9 +460,9 @@ public class Client extends JPanel implements Runnable {
 
     private void updateStatsLabel() {
         DecimalFormat formatter = new DecimalFormat("###,###.##");
-        v.statLabel1.setText("Total Bytes Received: " + statTotalBytes);
-        v.statLabel2.setText("Packet Lost Rate: " + formatter.format(statFractionLost));
-        v.statLabel3.setText("Data Rate: " + formatter.format(statDataRate) + " bytes/s");
+        view.statLabel1.setText("Total Bytes Received: " + statTotalBytes);
+        view.statLabel2.setText("Packet Lost Rate: " + formatter.format(statFractionLost));
+        view.statLabel3.setText("Data Rate: " + formatter.format(statDataRate) + " bytes/s");
     }
     //------------------------------------
     //Send RTSP Request
@@ -566,7 +487,7 @@ public class Client extends JPanel implements Runnable {
                 RTSPBufferedWriter.write("Check: WIFI" + CRLF);
             }
             else if (request_type == "DOWNLOAD") {
-                RTSPBufferedWriter.write("DOWNLOAD: " + v.downloadList + CRLF); //#########
+                RTSPBufferedWriter.write("DOWNLOAD: " + view.downloadList + CRLF); //#########
             }
             else {
                 //otherwise, write the Session line from the RTSPid field
