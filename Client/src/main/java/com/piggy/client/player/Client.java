@@ -111,7 +111,7 @@ public class Client extends JPanel implements Runnable {
             //Fixme:// change so it can get port and Ip when exec.
             //get server RTSP port and IP address from the command line
             int RTSP_server_port = 1052;//Integer.parseInt(argv[1]);
-            String ServerHost = "192.168.0.248";//"203.252.160.76";//"192.168.0.11";//argv[0];
+            String ServerHost = "172.20.10.3";//"203.252.160.76";//"192.168.0.11";//argv[0];
             ServerIPAddr = InetAddress.getByName(ServerHost);
 
             //Establish a TCP connection with the server to exchange RTSP messages
@@ -144,7 +144,7 @@ public class Client extends JPanel implements Runnable {
                     //UDP socket for sending QoS RTCP packets
                     RTCPsocket = new DatagramSocket();
                     //set TimeOut value of the socket to 5msec.
-                    RTPsocket.setSoTimeout(1000);
+                    RTPsocket.setSoTimeout(100000);
                 }
                 catch (SocketException se)
                 {
@@ -443,7 +443,7 @@ public class Client extends JPanel implements Runnable {
                 }
             } else if (reply_code == 1234) {
                 String fileList = RTSPBufferedReader.readLine();
-                System.out.println("!!!!!!!!Filelist: " + fileList);
+                System.out.println("Filelist: " + fileList);
                 for(String str : fileList.split("#")) {
                     if(str.length() > 0) {
                         view.left.add(str);
