@@ -97,11 +97,11 @@ public class Wifi implements Runnable {
             }
             Scanner sc = new Scanner(((str.split("Signal level=")[1]).split("  dB"))[0]);
             signalLevel = sc.nextInt();
-            if (signalLevel >= -50) {
+            if (signalLevel >= -30) {
                 return HIGH;
-            } else if (signalLevel < -50 && signalLevel >= -65) {
+            } else if (signalLevel < -30 && signalLevel >= -40) {
                 return MID;
-            } else if (signalLevel < -65) {
+            } else if (signalLevel < -40) {
                 return LOW;
             }
             process.destroy();

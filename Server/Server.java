@@ -272,7 +272,8 @@ public class Server  implements ActionListener, Runnable{
                 RTPsocket.send(senddp);
 
             } catch (Exception ex) {
-                System.out.println("Exception caught5: " + ex.toString());
+                //System.out.println("Exception caught5: " + ex.toString());
+                System.out.println("I'm waiting");
             }
         } else {
             //if we have reached the end of the video file, stop the timer
