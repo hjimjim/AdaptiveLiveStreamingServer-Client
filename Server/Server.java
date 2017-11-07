@@ -125,6 +125,21 @@ public class Server  implements ActionListener, Runnable{
             request_type = parseRequest(); //blocking
 
             if (request_type == SETUP) {
+
+                File[] listFile = new File("./saved").listFiles();
+                try{
+                   if(listFile.length >0) {
+                        for(int i=0; i<listFile.length; i++) {
+                            if(listFile[i].isFile()) {
+                                listFile[i].delete();
+                            } 
+                        }
+                    }
+                } catch (Exception e9) {
+                    System.out.println("Execption caught9: " + e9.toString());
+                }
+
+
                 done = true;
 
                 //update RTSP state

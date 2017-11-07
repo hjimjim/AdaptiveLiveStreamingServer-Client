@@ -1,6 +1,3 @@
-/**
- * Created by Jimin on 10/30/17.
- */
 public class Main {
     public static void main(String argv[]) throws Exception
     {
