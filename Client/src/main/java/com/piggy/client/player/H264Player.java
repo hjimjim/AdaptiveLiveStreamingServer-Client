@@ -3,14 +3,10 @@ import static com.piggy.client.decoder.H264Context.NAL_AUD;
 import static com.piggy.client.decoder.H264Context.NAL_IDR_SLICE;
 import static com.piggy.client.decoder.H264Context.NAL_SLICE;
 
-import java.awt.BorderLayout;
-import java.awt.Dimension;
 import java.awt.image.MemoryImageSource;
 import java.io.IOException;
 import java.io.PipedInputStream;
 import java.util.Arrays;
-
-import javax.swing.JFrame;
 
 import com.piggy.client.decoder.AVFrame;
 import com.piggy.client.decoder.AVPacket;
@@ -35,11 +31,12 @@ public class H264Player implements Runnable {
 	int[] inbuf_int = new int[INBUF_SIZE + MpegEncContext.FF_INPUT_BUFFER_PADDING_SIZE];
     AVPacket avpkt;
 
-    PipedInputStream bin;
+    PipedInputStream pipedInputStream;
     View v;
+    int code_count=0;
 
 	public H264Player(PipedInputStream pipedInputStream, View v) {
-        this.bin = pipedInputStream;
+        this.pipedInputStream = pipedInputStream;
 		this.v = v;
         init();
 	}
@@ -79,11 +76,10 @@ public class H264Player implements Runnable {
         init();
     }
     public void run() {
-		System.out.println("Playing ");
         while(true) {
             try {
-                if(bin.available() > 0) {
-                    playFile(bin);
+                if(pipedInputStream.available() > 0) {
+                    playFile(pipedInputStream);
                 }
             } catch (IOException e) {
                 e.printStackTrace();
@@ -124,7 +120,7 @@ public class H264Player implements Runnable {
 		return foundFrame;
 	}
 
-	public int playFile(PipedInputStream bin) {
+	public int playFile(PipedInputStream pipedInputStream) {
 		System.out.println("Video decoding\n");
         try {
         /* the codec gives us the frame size, in samples */
@@ -139,10 +135,10 @@ public class H264Player implements Runnable {
 
 
             int[] cacheRead = new int[5];
-            cacheRead[0] = bin.read();
-            cacheRead[1] = bin.read();
-            cacheRead[2] = bin.read();
-            cacheRead[3] = bin.read();
+            cacheRead[0] = pipedInputStream.read();
+            cacheRead[1] = pipedInputStream.read();
+            cacheRead[2] = pipedInputStream.read();
+            cacheRead[3] = pipedInputStream.read();
 
 
             while (!(
@@ -154,11 +150,11 @@ public class H264Player implements Runnable {
                 cacheRead[0] = cacheRead[1];
                 cacheRead[1] = cacheRead[2];
                 cacheRead[2] = cacheRead[3];
-                cacheRead[3] = bin.read();
+                cacheRead[3] = pipedInputStream.read();
             } // while
 
             boolean hasMoreNAL = true;
-            cacheRead[4] = bin.read();
+            cacheRead[4] = pipedInputStream.read();
 
             // 4 first bytes always indicate NAL header
             while (hasMoreNAL) {
@@ -170,15 +166,15 @@ public class H264Player implements Runnable {
 
                 dataPointer = 5;
                 // Find next NAL
-                cacheRead[0] = bin.read();
+                cacheRead[0] = pipedInputStream.read();
                 if (cacheRead[0] == -1) hasMoreNAL = false;
-                cacheRead[1] = bin.read();
+                cacheRead[1] = pipedInputStream.read();
                 if (cacheRead[1] == -1) hasMoreNAL = false;
-                cacheRead[2] = bin.read();
+                cacheRead[2] = pipedInputStream.read();
                 if (cacheRead[2] == -1) hasMoreNAL = false;
-                cacheRead[3] = bin.read();
+                cacheRead[3] = pipedInputStream.read();
                 if (cacheRead[3] == -1) hasMoreNAL = false;
-                cacheRead[4] = bin.read();
+                cacheRead[4] = pipedInputStream.read();
                 if (cacheRead[4] == -1) hasMoreNAL = false;
                 while (!(
                         cacheRead[0] == 0x00 &&
@@ -192,7 +188,7 @@ public class H264Player implements Runnable {
                     cacheRead[1] = cacheRead[2];
                     cacheRead[2] = cacheRead[3];
                     cacheRead[3] = cacheRead[4];
-                    cacheRead[4] = bin.read();
+                    cacheRead[4] = pipedInputStream.read();
                     if (cacheRead[4] == -1) hasMoreNAL = false;
                 } // while
 
@@ -207,10 +203,16 @@ public class H264Player implements Runnable {
                     while (avpkt.size > 0) {
                         len = c.avcodec_decode_video2(picture, got_picture, avpkt);
                         if (len < 0) {
+                            code_count++;
+                            if(code_count > 20) {
+                                v.addLog("PAUSE PAUSE");
+                                code_count = 0;
+                            }
                             System.out.println("Error while decoding frame " + frame);
                             // Discard current packet and proceed to next packet
                             break;
                         } // if
+                        code_count=0;
                         if (got_picture[0] != 0) {
                             picture = c.priv_data.displayPicture;
 

@@ -6,12 +6,7 @@ package com.piggy.client.player;
 import java.awt.event.*;
 import javax.swing.*;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
-import java.io.PipedOutputStream;
+import java.io.*;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
@@ -29,8 +24,6 @@ public class Client extends JPanel implements Runnable {
     DatagramSocket RTPsocket;        //socket to be used to send and receive UDP packets
     static int RTP_RCV_PORT = 5004; //port where the client will receive the RTP packets
     
-//    File outputFile = new File("sample.h264");
-//    FileOutputStream fos;
     Timer timer; //timer used to./img/ receive data from the UDP socket
     byte[] buf;  //buffer used to store data received from the server 
    
@@ -58,10 +51,6 @@ public class Client extends JPanel implements Runnable {
     //----------------
     DatagramSocket RTCPsocket;          //UDP socket for sending RTCP packets
 
-    //Video constants:
-    //------------------
-    static int MJPEG_TYPE = 96; //RTP payload type for MJPEG video
-
     //Statistics variables:
     //------------------
     double statDataRate;        //Rate of video data received in bytes/s
@@ -79,15 +68,15 @@ public class Client extends JPanel implements Runnable {
     boolean reconnect_flag = false;
     View view;
 
-    SharedArea sharedArea;
+    ClientStatus clientStatus;
     //--------------------------
     //Constructor
     //--------------------------
-    public Client(PipedOutputStream pipedOutputStream, View view, H264Player h264Player, SharedArea sharedArea ) {
+    public Client(PipedOutputStream pipedOutputStream, View view, H264Player h264Player, ClientStatus clientStatus) {
         //share Thread data
         this.pipedOutputStream = pipedOutputStream;
         this.h264Player  = h264Player;
-        this.sharedArea = sharedArea;
+        this.clientStatus = clientStatus;
         this.view = view;
         view.setupButton.addActionListener(new setupButtonListener());
         view.playButton.addActionListener(new playButtonListener());
@@ -108,10 +97,8 @@ public class Client extends JPanel implements Runnable {
     public void run() {
         //Run Client Thread
         try {
-            //Fixme:// change so it can get port and Ip when exec.
-            //get server RTSP port and IP address from the command line
             int RTSP_server_port = 1052;//Integer.parseInt(argv[1]);
-            String ServerHost = "172.20.10.3";//"203.252.160.76";//"192.168.0.11";//argv[0];
+            String ServerHost = "192.168.0.2";//argv[0];
             ServerIPAddr = InetAddress.getByName(ServerHost);
 
             //Establish a TCP connection with the server to exchange RTSP messages
@@ -128,6 +115,7 @@ public class Client extends JPanel implements Runnable {
             System.out.println(e.toString());
         }
     }
+
     //------------------------------------
     //Handler for buttons
     //------------------------------------
@@ -135,38 +123,47 @@ public class Client extends JPanel implements Runnable {
     class setupButtonListener implements ActionListener {
 
         public void actionPerformed(ActionEvent e){
-        	System.out.println("Setup Button pressed !");
+            view.addLog("Setup Button pressed !");
+
             if (state == INIT) {
+                //File directory init
+                File[] listFile = new File("./saved").listFiles();
+                try{
+                    if(listFile.length >0) {
+                        for(int i=0; i<listFile.length; i++) {
+                            if(listFile[i].isFile()) {
+                                listFile[i].delete();
+                            }
+                        }
+                    }
+                } catch (Exception e9) {
+                    System.out.println("Exception caught 9: " + e9.toString());
+                }
+
                 //Init non-blocking RTPsocket that will be used to receive data
                 try {
-                    //construct a new DatagramSocket to receive RTP packets from the server, on port RTP_RCV_PORT
                     RTPsocket = new DatagramSocket(RTP_RCV_PORT);
-                    //UDP socket for sending QoS RTCP packets
                     RTCPsocket = new DatagramSocket();
-                    //set TimeOut value of the socket to 5msec.
                     RTPsocket.setSoTimeout(100000);
-                }
-                catch (SocketException se)
-                {
+                } catch (SocketException se) {
                     System.out.println("Socket exception: "+se);
                     System.exit(0);
                 }
-                //init RTSP sequence number
-                RTSPSeqNb = 1;
-                //Send SETUP message to the server
-                sendRequest("SETUP");
+
+                RTSPSeqNb = 1; //init RTSP sequence number
+                sendRequest("SETUP"); //Send SETUP message to the server
+
                 //Wait for the response 
                 if (parseServerResponse() != 200)
                     System.out.println("Invalid Server Response");
                 else {
-                    //change RTSP state and print new state 
-                    state = READY;
+                    state = READY; //change RTSP state and print new state
                     System.out.println("New RTSP state: READY");
                 }
             }
-            //else if state != INIT then do nothing
         }
     }
+
     class saveButtonListener implements ActionListener{
     	public void actionPerformed(ActionEvent e) {
     		 String[] selectItems = view.right.getItems();
@@ -181,8 +178,8 @@ public class Client extends JPanel implements Runnable {
              RTSPSeqNb++;
 
              //Send DESCRIBE message to the server
-             sharedArea.downloadList = view.downloadList;
-             sharedArea.file_flag = true;
+             clientStatus.downloadList = view.downloadList;
+             clientStatus.file_flag = true;
              sendRequest("DOWNLOAD");
              view.addLog("Client sent download request to Server");
 
@@ -308,7 +305,7 @@ public class Client extends JPanel implements Runnable {
                     System.out.println(e5.toString());
                 }
 
-                if(reconnect_flag && rcvdp != null) {
+                if(reconnect_flag){// && rcvdp != null) {
                     reconnect_flag = false;
                     sendRequest("FILELIST");
                     int option = parseServerResponse();
@@ -350,30 +347,31 @@ public class Client extends JPanel implements Runnable {
                         sendRequest("WIFI");
                         int option = parseServerResponse();
                         if (option == 400) {
-                            System.out.println("New RTSP state: WIFI CHANGED");
+                            view.addLog("New RTSP state: WIFI CHANGED");
                             try {
                                 pipedOutputStream.flush();
-                            } catch (IOException e1) {
-                                System.out.println("Exception Jimin 3 " + e1.toString());
+                            } catch (IOException ioException) {
+                                System.out.println("Exception caught io " + ioException.toString());
                             }
                             wifi_restart_flag = true;
                         } else if (option == 300) {
-                            System.out.println("New RTSP state: WIFI NOT CHANGED");
+                            view.addLog("New RTSP state: WIFI NOT CHANGED");
                         } else if(option == 500) {
-                            System.out.println("New RTSP state: WIFI Reconnected");
+                            view.addLog("New RTSP state: WIFI Reconnected");
                             reconnect_flag = true;
-                        }
-                        else {
-                            System.out.println("Invalid Server Response");
+                        } else {
+                            view.addLog("Invalid Server Response");
                         }
                         wifi_check_cnt = 0;
                     }
                     wifi_check_cnt++;
+
                     try {
                         pipedOutputStream.write(payload);
-                    } catch (IOException e1) {
-                        System.out.println("Exception caught Jimin 2" + e1.toString());
+                    } catch (IOException ioException) {
+                        System.out.println("Exception caught io : " + ioException.toString());
                     }
+
                     if(wifi_restart_flag) {
                         h264Player.replay();
                         wifi_restart_flag = false;
@@ -443,7 +441,7 @@ public class Client extends JPanel implements Runnable {
                 }
             } else if (reply_code == 1234) {
                 String fileList = RTSPBufferedReader.readLine();
-                System.out.println("Filelist: " + fileList);
+                view.addLog("Filelist: " + fileList);
                 for(String str : fileList.split("#")) {
                     if(str.length() > 0) {
                         view.left.add(str);

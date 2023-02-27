@@ -4,10 +4,8 @@
 ---------------------- */
 import java.io.*;
 import java.net.*;
-import java.awt.*;
 import java.util.*;
 import java.awt.event.*;
-import javax.swing.*;
 import javax.swing.Timer;
 //extends JFrame
 public class Server  implements ActionListener, Runnable{
@@ -22,7 +20,7 @@ public class Server  implements ActionListener, Runnable{
 
     //Video variables:
     int imagenb = 0; //image nb of the image currently transmitted
-    VideoStream video; //VideoStream object used to access video frames
+    Camera video; //VideoStream object used to access video frames
     static int MJPEG_TYPE = 96; //RTP payload type for MJPEG video
     static int FRAME_PERIOD = 100; //Frame period of the video to stream, in ms
     static int VIDEO_LENGTH = 5000; //length of the video in frames
@@ -64,13 +62,13 @@ public class Server  implements ActionListener, Runnable{
     DatagramSocket RTCPsocket;
 
     final static String CRLF = "\r\n";
-    SharedArea sharedArea;
+    ServerStatus serverStatus;
 
     Wifi wifi;
     //--------------------------------
     //Constructor
     //--------------------------------
-    public Server(VideoStream videoStream, SharedArea sharedArea, Wifi wifi) {
+    public Server(Camera camera, ServerStatus serverStatus, Wifi wifi) {
         //init RTP sending Timer
         sendDelay = FRAME_PERIOD;
         timer = new Timer(sendDelay, this);
@@ -81,8 +79,8 @@ public class Server  implements ActionListener, Runnable{
         buf = new byte[20000];
         buff = new byte[20000];
 
-        this.video = videoStream;
-        this.sharedArea = sharedArea;
+        this.video = camera;
+        this.serverStatus = serverStatus;
         this.wifi = wifi;
     }
 
@@ -106,7 +104,7 @@ public class Server  implements ActionListener, Runnable{
 
         //Get Client IP address
         ClientIPAddr = RTSPsocket.getInetAddress();
-        sharedArea.clientIP = ClientIPAddr.getHostAddress();
+        serverStatus.clientIP = ClientIPAddr.getHostAddress();
         //Initiate RTSPstate
         state = INIT;
 
@@ -170,7 +168,7 @@ public class Server  implements ActionListener, Runnable{
                 //start timer
                 try {
                     video.getStarted("240","320");
-                    sharedArea.start_flag = true;
+                    serverStatus.start_flag = true;
                 }catch(Exception e) {
                     System.out.println("error from getStarted()");
                 }
@@ -248,7 +246,7 @@ public class Server  implements ActionListener, Runnable{
     public void actionPerformed(ActionEvent e) {
         int image_length = 0 ;
 
-        if(sharedArea.disconnect_flag) {
+        if(serverStatus.disconnect_flag) {
             return;
         }
 
@@ -359,8 +357,8 @@ public class Server  implements ActionListener, Runnable{
                 tokens.nextToken();
                 String filelist = tokens.nextToken();
                 System.out.println("DOWNLOAD FILE LIST: " + filelist);
-                sharedArea.filelist = filelist;
-                sharedArea.file_flag  = true;
+                serverStatus.filelist = filelist;
+                serverStatus.file_flag  = true;
                 //FileServer fServer = new FileServer(ClientIPAddr.getHostAddress(), 2222, filelist.split("#"));
                 //fServer.start();
                 sendResponse();

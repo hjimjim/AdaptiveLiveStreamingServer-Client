@@ -11,29 +11,29 @@ import java.net.Socket;
 public class FileDownloader implements Runnable {
 	private ServerSocket ss;
 	private String[] fileList;
-	private SharedArea sharedArea;
+	private ClientStatus clientStatus;
 	private int port;
 	View v;
 
-	public FileDownloader(int port, SharedArea sharedArea, View v) {// String[] fileList) {
+	public FileDownloader(int port, ClientStatus clientStatus, View v) {// String[] fileList) {
 		this.port=port;
-		this.sharedArea = sharedArea;
+		this.clientStatus = clientStatus;
 		this.v = v;
 	}
 	public void run() {
 		while (true) {
-			if (!sharedArea.file_flag) {
+			if (!clientStatus.file_flag) {
 				System.out.print("");
 				continue;
 			} else {
-				this.fileList = sharedArea.downloadList.split("#");
+				this.fileList = clientStatus.downloadList.split("#");
 				try {
 					ss = new ServerSocket(port);
 					Socket clientSock = ss.accept();
 					if (clientSock != null) {
 						addLog("Client got saved file");
 						saveFile(clientSock);
-						sharedArea.file_flag = false;
+						clientStatus.file_flag = false;
 						JOptionPane.showMessageDialog(null, "Download Finished!");
 						v.progress_bar.setValue(0);
 					}

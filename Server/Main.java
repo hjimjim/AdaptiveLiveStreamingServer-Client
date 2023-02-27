@@ -1,17 +1,17 @@
 public class Main {
     public static void main(String argv[]) throws Exception
     {
-        SharedArea sharedArea = new SharedArea();
-        VideoStream videoStream = new VideoStream();
-        sharedArea.start_flag = false;
-        sharedArea.file_flag = false;
-        sharedArea.filelist = "";
-        sharedArea.disconnect_flag = false;
+        ServerStatus serverStatus = new ServerStatus();
+        Camera camera = new Camera();
+        serverStatus.start_flag = false;
+        serverStatus.file_flag = false;
+        serverStatus.filelist = "";
+        serverStatus.disconnect_flag = false;
 
 
-        Wifi wifi = new Wifi(videoStream, sharedArea);
-        Server server = new Server(videoStream, sharedArea, wifi);
-        FileServer fileServer = new FileServer(5522, sharedArea);
+        Wifi wifi = new Wifi(camera, serverStatus);
+        Server server = new Server(camera, serverStatus, wifi);
+        FileServer fileServer = new FileServer(5522, serverStatus);
 
         Thread server_thread = new Thread(server);
         Thread wifi_thread = new Thread(wifi);
@@ -23,7 +23,7 @@ public class Main {
     }
 }
 
-class SharedArea {
+class ServerStatus {
     String filelist;
     boolean file_flag;
     boolean start_flag;

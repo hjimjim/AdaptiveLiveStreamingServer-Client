@@ -7,21 +7,21 @@ public class FileServer implements Runnable {
     private String ip;
     private int port;
     private String[] fileList;
-    private SharedArea sharedArea;
+    private ServerStatus serverStatus;
 
-    public FileServer(int port, SharedArea sharedArea) {
+    public FileServer(int port, ServerStatus serverStatus) {
         this.port = port;
-        this.sharedArea = sharedArea;
+        this.serverStatus = serverStatus;
     }
     
     public void run() {
         while(true) {
-            if(!sharedArea.file_flag) {
+            if(!serverStatus.file_flag) {
                 continue;
             }
-            this.fileList =  sharedArea.filelist.split("#");
+            this.fileList =  serverStatus.filelist.split("#");
             try {
-                ip = sharedArea.clientIP;
+                ip = serverStatus.clientIP;
                 //System.out.println(ip);
                 //System.out.println(port);
                 Socket s = new Socket(ip, port);
@@ -47,7 +47,7 @@ public class FileServer implements Runnable {
                     fis.close();
                     read = 0;
                 }
-                sharedArea.file_flag = false;
+                serverStatus.file_flag = false;
                 dos.close();
                 s.close();
             } catch(Exception downE) {
